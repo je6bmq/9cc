@@ -29,6 +29,8 @@ typedef enum
     ND_SUB,        // -
     ND_MUL,        // *
     ND_DIV,        // /
+    ND_EQUAL,      // ==
+    ND_NOT_EQUAL,  // !=
     ND_LESS_THAN,  // <
     ND_LESS_EQUAL, // <=
     ND_NUM,        // integer
@@ -174,10 +176,10 @@ Token *tokenize(char *p)
             continue;
         }
 
-        if (memcmp(p, "<=", 2) == 0 || memcmp(p, ">=", 2) == 0)
+        if (memcmp(p, "<=", 2) == 0 || memcmp(p, ">=", 2) == 0 || memcmp(p, "==", 2) == 0 || memcmp(p, "!=", 2) == 0)
         {
             cur = new_token(TK_RESERVED, cur, p, 2);
-            p+=2;
+            p += 2;
             continue;
         }
 
@@ -213,7 +215,51 @@ Node *new_node_num(int val)
     return node;
 }
 
-Node *expr()
+Node *expr() {
+    return equality();
+}
+
+Node *equality()
+{
+    Node *node = relational();
+    if (consume("=="))
+    {
+        node = new_node(ND_EQUAL, node, relational());
+    }
+    else if (consume("!="))
+    {
+        node = new_node(ND_NOT_EQUAL, node, relational());
+    }
+    else
+    {
+        return node;
+    }
+}
+
+Node *relational()
+{
+    Node *node = add();
+    if (consume("<"))
+    {
+        node = new_node(ND_LESS_THAN, node, add());
+    }
+    else if (consume("<="))
+    {
+        node = new_node(ND_LESS_EQUAL, node, add());
+    }
+    else if (consume(">"))
+    {
+        node = new_node(ND_LESS_THAN, add(), node);
+    }
+    else if (consume(">="))
+    {
+        node = new_node(ND_LESS_EQUAL, add(), node);
+    } else {
+        return node;
+    }
+}
+
+Node *add()
 {
     Node *node = mul();
 
@@ -308,6 +354,25 @@ void gen(Node *node)
     case ND_DIV:
         printf("    cqo\n"); // expand rax(64bit) to rax and rdx(128bit)
         printf("    idiv rdi\n");
+        break;
+    case ND_EQUAL:
+        printf("    cmp rax, rdi\n");
+        printf("    sete al");
+        printf("    movzb rax, al");
+    case ND_NOT_EQUAL:
+        printf("    cmp rax, rdi\n");
+        printf("    setne al");
+        printf("    movzb rax, al");
+        break;
+    case ND_LESS_THAN:
+        printf("    cmp rax, rdi\n");
+        printf("    setl al");
+        printf("    movzb rax, al");
+        break;
+    case ND_LESS_EQUAL:
+        printf("    cmp rax, rdi\n");
+        printf("    setle al");
+        printf("    movzb rax, al");
         break;
     }
 
