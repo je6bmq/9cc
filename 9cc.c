@@ -20,15 +20,18 @@ struct Token
     Token *next;    // next token pointer
     int val;        // evaluated value if kind == TK_NUM
     char *str;      // token string
+    int len;        // token length
 };
 
 typedef enum
 {
-    ND_ADD, // +
-    ND_SUB, // -
-    ND_MUL, // *
-    ND_DIV, // /
-    ND_NUM, // integer
+    ND_ADD,        // +
+    ND_SUB,        // -
+    ND_MUL,        // *
+    ND_DIV,        // /
+    ND_LESS_THAN,  // <
+    ND_LESS_EQUAL, // <=
+    ND_NUM,        // integer
 } NodeKind;
 
 typedef struct Node Node;
@@ -42,6 +45,9 @@ struct Node
 };
 
 Node *expr();
+Node *equality();
+Node *relational();
+Node *add();
 Node *mul();
 Node *unary();
 Node *term();
@@ -81,9 +87,9 @@ void error(char *fmt, ...)
 /*
   return whether next token is reserved symbol or not.
  */
-bool consume(char op)
+bool consume(char *op)
 {
-    if (token->kind != TK_RESERVED || token->str[0] != op)
+    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len))
     {
         return false;
     }
@@ -94,9 +100,9 @@ bool consume(char op)
 /*
     if next token is not reserved, abnormal exit.
  */
-void expect(char op)
+void expect(char *op)
 {
-    if (token->kind != TK_RESERVED || token->str[0] != op)
+    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len))
     {
         error_at(token->str, "'%c'ではありません", op);
     }
@@ -128,11 +134,12 @@ bool at_eof()
 /*
     create new token and chain current token
  */
-Token *new_token(TokenKind kind, Token *cur, char *str)
+Token *new_token(TokenKind kind, Token *cur, char *str, int len)
 {
     Token *tok = calloc(1, sizeof(Token));
     tok->kind = kind;
     tok->str = str;
+    tok->len = len;
     cur->next = tok;
     return tok;
 }
@@ -155,15 +162,28 @@ Token *tokenize(char *p)
             continue;
         }
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/')
+        if (memcmp(p, "*", 1) == 0 || memcmp(p, "-", 1) == 0 || memcmp(p, "*", 1) == 0 || memcmp(p, "/", 1) == 0)
         {
-            cur = new_token(TK_RESERVED, cur, p++);
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
+        if (memcmp(p, "<", 1) == 0 || memcmp(p, ">", 1) == 0)
+        {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
+        if (memcmp(p, "<=", 2) == 0 || memcmp(p, ">=", 2) == 0)
+        {
+            cur = new_token(TK_RESERVED, cur, p, 2);
+            p+=2;
             continue;
         }
 
         if (isdigit(*p))
         {
-            cur = new_token(TK_NUM, cur, p);
+            cur = new_token(TK_NUM, cur, p, 1);
             cur->val = strtol(p, &p, 10);
             continue;
         }
@@ -171,7 +191,7 @@ Token *tokenize(char *p)
         error_at(token->str, "トークナイズできません");
     }
 
-    new_token(TK_EOF, cur, p);
+    new_token(TK_EOF, cur, p, 1);
     return head.next;
 }
 
@@ -199,11 +219,11 @@ Node *expr()
 
     for (;;)
     {
-        if (consume('+'))
+        if (consume("+"))
         {
             node = new_node(ND_ADD, node, mul());
         }
-        else if (consume('-'))
+        else if (consume("-"))
         {
             node = new_node(ND_SUB, node, mul());
         }
@@ -220,11 +240,11 @@ Node *mul()
 
     for (;;)
     {
-        if (consume('*'))
+        if (consume("*"))
         {
             node = new_node(ND_MUL, node, unary());
         }
-        else if (consume('/'))
+        else if (consume("/"))
         {
             node = new_node(ND_DIV, node, unary());
         }
@@ -237,11 +257,11 @@ Node *mul()
 
 Node *unary()
 {
-    if (consume('+'))
+    if (consume("+"))
     {
         return term();
     }
-    if (consume('-'))
+    if (consume("-"))
     {
         return new_node(ND_SUB, new_node_num(0), term());
     }
@@ -250,10 +270,10 @@ Node *unary()
 
 Node *term()
 {
-    if (consume('('))
+    if (consume("("))
     {
         Node *node = expr();
-        expect(')');
+        expect(")");
         return node;
     }
 
