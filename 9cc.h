@@ -31,6 +31,8 @@ typedef enum
     ND_NOT_EQUAL,  // !=
     ND_LESS_THAN,  // <
     ND_LESS_EQUAL, // <=
+    ND_ASSIGN,     // =
+    ND_LVAR,       // local variable
     ND_NUM,        // integer
 } NodeKind;
 
@@ -42,6 +44,7 @@ struct Node
     Node *lhs;
     Node *rhs;
     int val; // used if kind == ND_NUM
+    int offset; // stack offset for variable(ND_LVAR)
 };
 
 void error_at(char *loc, char *fmt, ...);
@@ -51,6 +54,9 @@ void expect(char *op);
 int expect_number();
 bool at_eof();
 
+void program();
+Node *stmt();
+Node *assign();
 Node *expr();
 Node *equality();
 Node *relational();
@@ -70,5 +76,6 @@ void gen(Node *node);
  */
 extern Token *token; // current token
 extern char *user_input;
+extern Node *code[100];
 
 #endif

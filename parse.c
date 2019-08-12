@@ -8,6 +8,7 @@
 
 Token *token; // current token
 char *user_input;
+Node *code[100];
 
 void error_at(char *loc, char *fmt, ...)
 {
@@ -48,6 +49,20 @@ bool consume(char *op)
     return true;
 }
 
+Token *consume_ident()
+{
+    if (token->kind != TK_IDENT || token->str[0] < 'a' || token->str[0] > 'z')
+    {
+        return NULL;
+    }
+    else
+    {
+        Token *tok = token; // copy of current token
+        token = token->next; // step token to continuing process
+        return tok;
+    }
+}
+
 /*
     if next token is not reserved, abnormal exit.
  */
@@ -55,7 +70,7 @@ void expect(char *op)
 {
     if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len))
     {
-        error_at(token->str, "'%c'ではありません", op);
+        error_at(token->str, "'%s'ではありません", op);
     }
     token = token->next;
 }
@@ -113,23 +128,36 @@ void tokenize()
             p++;
             continue;
         }
-
-        if (memcmp(p, "*", 1) == 0 || memcmp(p, "-", 1) == 0 || memcmp(p, "*", 1) == 0 || memcmp(p, "/", 1) == 0)
-        {
-            cur = new_token(TK_RESERVED, cur, p++, 1);
-            continue;
-        }
-
-        if (memcmp(p, "<", 1) == 0 || memcmp(p, ">", 1) == 0)
-        {
-            cur = new_token(TK_RESERVED, cur, p++, 1);
-            continue;
-        }
-
+        
         if (memcmp(p, "<=", 2) == 0 || memcmp(p, ">=", 2) == 0 || memcmp(p, "==", 2) == 0 || memcmp(p, "!=", 2) == 0)
         {
             cur = new_token(TK_RESERVED, cur, p, 2);
             p += 2;
+            continue;
+        }
+
+        if (memcmp(p, "+", 1) == 0 || memcmp(p, "-", 1) == 0 || memcmp(p, "*", 1) == 0 || memcmp(p, "/", 1) == 0)
+        {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
+        if (memcmp(p, ";", 1) == 0 || memcmp(p, "(", 1) == 0 || memcmp(p, ")", 1) == 0)
+        {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
+        if (memcmp(p, "=", 1) == 0)
+        {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
+
+        if (memcmp(p, "<", 1) == 0 || memcmp(p, ">", 1) == 0)
+        {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
 
@@ -140,7 +168,8 @@ void tokenize()
             continue;
         }
 
-        if('a' <= *p && *p <= 'z') {
+        if ('a' <= *p && *p <= 'z')
+        {
             cur = new_token(TK_IDENT, cur, p++, 1);
             continue;
         }
@@ -170,47 +199,83 @@ Node *new_node_num(int val)
     return node;
 }
 
-Node *expr() {
-    return equality();
+void program()
+{
+    int i = 0;
+    while (!at_eof())
+    {
+        code[i++] = stmt();
+    }
+    code[i] = NULL;
+}
+
+Node *stmt()
+{
+    Node *node = expr();
+    expect(";");
+    return node;
+}
+
+Node *expr()
+{
+    return assign();
+}
+
+Node *assign()
+{
+    Node *node = equality();
+    if (consume("="))
+    {
+        node = new_node(ND_ASSIGN, node, assign());
+    }
+    return node;
 }
 
 Node *equality()
 {
     Node *node = relational();
-    if (consume("=="))
+    for (;;)
     {
-        node = new_node(ND_EQUAL, node, relational());
-    }
-    else if (consume("!="))
-    {
-        node = new_node(ND_NOT_EQUAL, node, relational());
-    }
-    else
-    {
-        return node;
+        if (consume("=="))
+        {
+            node = new_node(ND_EQUAL, node, relational());
+        }
+        else if (consume("!="))
+        {
+            node = new_node(ND_NOT_EQUAL, node, relational());
+        }
+        else
+        {
+            return node;
+        }
     }
 }
 
 Node *relational()
 {
     Node *node = add();
-    if (consume("<"))
+    for (;;)
     {
-        node = new_node(ND_LESS_THAN, node, add());
-    }
-    else if (consume("<="))
-    {
-        node = new_node(ND_LESS_EQUAL, node, add());
-    }
-    else if (consume(">"))
-    {
-        node = new_node(ND_LESS_THAN, add(), node);
-    }
-    else if (consume(">="))
-    {
-        node = new_node(ND_LESS_EQUAL, add(), node);
-    } else {
-        return node;
+        if (consume("<"))
+        {
+            node = new_node(ND_LESS_THAN, node, add());
+        }
+        else if (consume("<="))
+        {
+            node = new_node(ND_LESS_EQUAL, node, add());
+        }
+        else if (consume(">"))
+        {
+            node = new_node(ND_LESS_THAN, add(), node);
+        }
+        else if (consume(">="))
+        {
+            node = new_node(ND_LESS_EQUAL, add(), node);
+        }
+        else
+        {
+            return node;
+        }
     }
 }
 
@@ -237,7 +302,7 @@ Node *add()
 
 Node *mul()
 {
-    Node *node = term();
+    Node *node = unary();
 
     for (;;)
     {
@@ -275,6 +340,15 @@ Node *term()
     {
         Node *node = expr();
         expect(")");
+        return node;
+    }
+
+    Token *tok = consume_ident();
+    if (tok)
+    {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_LVAR;
+        node->offset = (tok->str[0] - 'a' + 1) * 8;
         return node;
     }
 
