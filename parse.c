@@ -140,6 +140,11 @@ void tokenize()
             continue;
         }
 
+        if('a' <= *p && *p <= 'z') {
+            cur = new_token(TK_IDENT, cur, p++, 1);
+            continue;
+        }
+
         error_at(token->str, "トークナイズできません");
     }
 

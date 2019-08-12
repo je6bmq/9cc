@@ -5,6 +5,7 @@
 typedef enum
 {
     TK_RESERVED, // reserved symbol
+    TK_IDENT,    // identifier
     TK_NUM,      // integer token
     TK_EOF,      // EOF(End Of File) Token
 } TokenKind;
