@@ -12,7 +12,8 @@ int main(int argc, char **argv)
 
     user_input = argv[1];
 
-    token = tokenize(user_input);
+    // token = tokenize(user_input);
+    tokenize();
     Node *node = expr();
 
     printf(".intel_syntax noprefix\n");

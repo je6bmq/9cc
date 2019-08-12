@@ -61,7 +61,7 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
-Token *tokenize(char *p);
+void tokenize();
 
 void gen(Node *node);
 /*
@@ -70,6 +70,4 @@ void gen(Node *node);
 extern Token *token; // current token
 extern char *user_input;
 
-
 #endif
-
