@@ -151,10 +151,10 @@ void tokenize()
             continue;
         }
 
-        if (strncmp(p, "while", 5) == 0 && !is_alnum(p[5]))
+        if (strncmp(p, "for", 3) == 0 && !is_alnum(p[3]))
         {
-            cur = new_token(TK_WHILE, cur, p, 5);
-            p += 5;
+            cur = new_token(TK_FOR, cur, p, 3);
+            p += 3;
             continue;
         }
 
@@ -281,6 +281,48 @@ Node *stmt()
         expect(")");
         Node *process = stmt();
         node = new_node(ND_WHILE, condition, process);
+        return node;
+    }
+
+    if (consume("for"))
+    {
+        expect("(");
+        Node *initial;
+        if (token->next->str[0] == ';')
+        {
+            initial = new_node_num(1);
+        }
+        else
+        {
+            initial = expr();
+        }
+        token = token->next;
+        Node *condition;
+        if (token->next->str[0] == ';')
+        {
+            condition = new_node_num(1);
+        }
+        else
+        {
+            condition = expr();
+        }
+        token = token->next;
+        Node *updater;
+        if (token->next->str[0] == ';')
+        {
+            updater = new_node_num(1);
+        }
+        else
+        {
+            updater = expr();
+        }
+        node = new_node(ND_FOR, initial, condition);
+        expect(")");
+        Node *statement;
+        statement = stmt();
+        node->other = updater;
+        node->another = statement;
+
         return node;
     }
 

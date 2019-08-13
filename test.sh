@@ -44,4 +44,5 @@ try 3 'foo = 1; fuga=2; return foo + fuga;'
 try 1 'if(1 < 3) 1; else 3;'
 try 4 'a = 3; if(a<4) a=4;'
 try 5 'hoge = 0; while(hoge<5) hoge=hoge+1;'
+try 10 'hoge = 0; for(i=0;i<10;i=i+1) hoge=hoge+1;'
 echo "OK"

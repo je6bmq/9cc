@@ -55,6 +55,7 @@ struct Node
     Node *lhs;
     Node *rhs;
     Node *other;
+    Node *another;
     int val;    // used if kind == ND_NUM
     int offset; // stack offset for variable(ND_LVAR)
 };
