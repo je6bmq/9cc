@@ -274,7 +274,8 @@ Node *stmt()
         return node;
     }
 
-    if(consume("while")) {
+    if (consume("while"))
+    {
         expect("(");
         Node *condition = expr();
         expect(")");
