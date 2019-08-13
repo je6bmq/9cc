@@ -10,6 +10,7 @@ Token *token; // current token
 char *user_input;
 Node *code[100];
 LVar *locals = NULL;
+int current_node_id;
 
 void error_at(char *loc, char *fmt, ...)
 {
@@ -130,6 +131,27 @@ void tokenize()
             continue;
         }
 
+        if (strncmp(p, "if", 2) == 0 && !is_alnum(p[2]))
+        {
+            cur = new_token(TK_IF, cur, p, 2);
+            p += 2;
+            continue;
+        }
+
+        if (strncmp(p, "else", 4) == 0 && !is_alnum(p[4]))
+        {
+            cur = new_token(TK_ELSE, cur, p, 4);
+            p += 4;
+            continue;
+        }
+
+        if (strncmp(p, "while", 5) == 0 && !is_alnum(p[5]))
+        {
+            cur = new_token(TK_WHILE, cur, p, 5);
+            p += 5;
+            continue;
+        }
+
         if (strncmp(p, "return", 6) == 0 && !is_alnum(p[6]))
         {
             cur = new_token(TK_RETURN, cur, p, 6);
@@ -183,7 +205,7 @@ void tokenize()
                 name_count++;
             }
             cur = new_token(TK_IDENT, cur, p, name_count);
-            p+=name_count;
+            p += name_count;
             continue;
         }
 
@@ -197,6 +219,7 @@ void tokenize()
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 {
     Node *node = calloc(1, sizeof(Node));
+    node->id = current_node_id++;
     node->kind = kind;
     node->lhs = lhs;
     node->rhs = rhs;
@@ -207,6 +230,7 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 Node *new_node_num(int val)
 {
     Node *node = calloc(1, sizeof(Node));
+    node->id = current_node_id++;
     node->kind = ND_NUM;
     node->val = val;
     return node;
@@ -229,9 +253,16 @@ Node *stmt()
     if (consume("if"))
     {
         expect("(");
-        node->lhs = expr();
+        Node *condition = expr();
         expect(")");
-        node->rhs = stmt();
+        Node* if_true_statement = stmt();
+        node = new_node(ND_IF, condition, if_true_statement);
+        if(consume("else")) {
+            node->other = stmt();
+        } else {
+            node->other = NULL;
+        }
+        return node;
     }
 
     if (consume("return"))
