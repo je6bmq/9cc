@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 Node *code[100];
+LVar *locals;
 
 int main(int argc, char **argv)
 {
@@ -23,7 +24,7 @@ int main(int argc, char **argv)
 
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
-    printf("    sub rsp, 208\n"); // alphabet 26 chars * 8 bytes
+    printf("    sub rsp, %d\n", locals? locals->offset : 0); // alphabet 26 chars * 8 bytes
 
     for (int i = 0; code[i]; i++)
     {

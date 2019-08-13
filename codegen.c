@@ -67,14 +67,19 @@ void gen(Node *node)
             printf("  .Lend%d:\n",node->id);
             return;
         case ND_FOR:
-            gen(node->lhs);
+            if(node->lhs != NULL) {
+                gen(node->lhs); // initialize part
+            }
             printf(".Lbegin%d:\n", node->id);
-            gen(node->rhs);
+            gen(node->rhs); // condition part
             printf("    pop rax\n");
             printf("    cmp rax, 0\n");
             printf("    je  .Lend%d\n", node->id);
-            gen(node->another);
-            gen(node->other);
+            gen(node->another); // statement part
+            if(node->other != NULL) {
+                gen(node->other); // update variable part
+                printf("    pop rdi\n"); // drop the result of update expression.
+            }
             printf("    jmp .Lbegin%d\n",node->id);
             printf("  .Lend%d:\n",node->id);            
             return;

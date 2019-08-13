@@ -9,7 +9,7 @@
 Token *token; // current token
 char *user_input;
 Node *code[100];
-LVar *locals = NULL;
+LVar *locals;
 int current_node_id;
 
 void error_at(char *loc, char *fmt, ...)
@@ -288,36 +288,35 @@ Node *stmt()
     {
         expect("(");
         Node *initial;
-        if (token->next->str[0] == ';')
+        if (consume(";"))
         {
-            initial = new_node_num(1);
+            initial = NULL;
         }
         else
         {
             initial = expr();
+            expect(";");
         }
-        token = token->next;
         Node *condition;
-        if (token->next->str[0] == ';')
+        if (consume(";"))
         {
-            condition = new_node_num(1);
+            condition = new_node(ND_LESS_THAN, new_node_num(0),new_node_num(1));
         }
         else
         {
             condition = expr();
+            expect(";");
         }
-        token = token->next;
         Node *updater;
-        if (token->next->str[0] == ';')
-        {
-            updater = new_node_num(1);
-        }
-        else
-        {
+        if(consume(")")) {
+            updater = NULL;
+        } else {
             updater = expr();
+            expect(")");
         }
+
         node = new_node(ND_FOR, initial, condition);
-        expect(")");
+        
         Node *statement;
         statement = stmt();
         node->other = updater;
