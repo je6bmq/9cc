@@ -300,7 +300,7 @@ Node *stmt()
         Node *condition;
         if (consume(";"))
         {
-            condition = new_node(ND_LESS_THAN, new_node_num(0),new_node_num(1));
+            condition = new_node(ND_LESS_THAN, new_node_num(0), new_node_num(1));
         }
         else
         {
@@ -308,15 +308,18 @@ Node *stmt()
             expect(";");
         }
         Node *updater;
-        if(consume(")")) {
+        if (consume(")"))
+        {
             updater = NULL;
-        } else {
+        }
+        else
+        {
             updater = expr();
             expect(")");
         }
 
         node = new_node(ND_FOR, initial, condition);
-        
+
         Node *statement;
         statement = stmt();
         node->other = updater;
