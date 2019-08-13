@@ -137,6 +137,12 @@ void tokenize()
             p += 2;
             continue;
         }
+        if (strncmp(p, "while", 2) == 0 && !is_alnum(p[5]))
+        {
+            cur = new_token(TK_WHILE, cur, p, 5);
+            p += 5;
+            continue;
+        }
 
         if (strncmp(p, "else", 4) == 0 && !is_alnum(p[4]))
         {
@@ -255,13 +261,25 @@ Node *stmt()
         expect("(");
         Node *condition = expr();
         expect(")");
-        Node* if_true_statement = stmt();
+        Node *if_true_statement = stmt();
         node = new_node(ND_IF, condition, if_true_statement);
-        if(consume("else")) {
+        if (consume("else"))
+        {
             node->other = stmt();
-        } else {
+        }
+        else
+        {
             node->other = NULL;
         }
+        return node;
+    }
+
+    if(consume("while")) {
+        expect("(");
+        Node *condition = expr();
+        expect(")");
+        Node *process = stmt();
+        node = new_node(ND_WHILE, condition, process);
         return node;
     }
 
