@@ -9,6 +9,7 @@
 Token *token; // current token
 char *user_input;
 Node *code[100];
+LVar *locals = NULL;
 
 void error_at(char *loc, char *fmt, ...)
 {
@@ -41,7 +42,7 @@ void error(char *fmt, ...)
  */
 bool consume(char *op)
 {
-    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len))
+    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN) || strlen(op) != token->len || memcmp(token->str, op, token->len))
     {
         return false;
     }
@@ -57,7 +58,7 @@ Token *consume_ident()
     }
     else
     {
-        Token *tok = token; // copy of current token
+        Token *tok = token;  // copy of current token
         token = token->next; // step token to continuing process
         return tok;
     }
@@ -68,7 +69,7 @@ Token *consume_ident()
  */
 void expect(char *op)
 {
-    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len))
+    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN) || strlen(op) != token->len || memcmp(token->str, op, token->len))
     {
         error_at(token->str, "'%s'ではありません", op);
     }
@@ -128,7 +129,14 @@ void tokenize()
             p++;
             continue;
         }
-        
+
+        if (strncmp(p, "return", 6) == 0 && !is_alnum(p[6]))
+        {
+            cur = new_token(TK_RETURN, cur, p, 6);
+            p += 6;
+            continue;
+        }
+
         if (memcmp(p, "<=", 2) == 0 || memcmp(p, ">=", 2) == 0 || memcmp(p, "==", 2) == 0 || memcmp(p, "!=", 2) == 0)
         {
             cur = new_token(TK_RESERVED, cur, p, 2);
@@ -153,7 +161,6 @@ void tokenize()
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
-
 
         if (memcmp(p, "<", 1) == 0 || memcmp(p, ">", 1) == 0)
         {
@@ -211,8 +218,23 @@ void program()
 
 Node *stmt()
 {
-    Node *node = expr();
-    expect(";");
+    Node *node;
+
+    if (consume("return"))
+    {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_RETURN;
+        node->lhs = expr();
+    }
+    else
+    {
+        node = expr();
+    }
+
+    if (!consume(";"))
+    {
+        error_at(token->str, "';'ではないトークンです．");
+    }
     return node;
 }
 
@@ -348,9 +370,45 @@ Node *term()
     {
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
-        node->offset = (tok->str[0] - 'a' + 1) * 8;
+
+        LVar *lvar = find_lvar(tok);
+        if (lvar)
+        {
+            // found
+            node->offset = lvar->offset;
+        }
+        else
+        {
+            lvar = calloc(1, sizeof(LVar));
+            lvar->next = locals;
+            lvar->name = tok->str;
+            lvar->len = tok->len;
+            lvar->offset = (locals ? locals->offset : 0) + 8;
+            node->offset = lvar->offset;
+            locals = lvar;
+        }
         return node;
     }
 
     return new_node_num(expect_number());
+}
+
+LVar *find_lvar(Token *tok)
+{
+    for (LVar *var = locals; var; var = var->next)
+    {
+        if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+        {
+            return var;
+        }
+    }
+    return NULL;
+}
+
+int is_alnum(char c)
+{
+    return ('a' <= c && c <= 'z') ||
+           ('A' <= c && c <= 'Z') ||
+           ('0' <= c && c <= '9') ||
+           (c == '_');
 }

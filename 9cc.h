@@ -8,6 +8,7 @@ typedef enum
     TK_IDENT,    // identifier
     TK_NUM,      // integer token
     TK_EOF,      // EOF(End Of File) Token
+    TK_RETURN,   // return statement;
 } TokenKind;
 
 typedef struct Token Token;
@@ -34,6 +35,7 @@ typedef enum
     ND_ASSIGN,     // =
     ND_LVAR,       // local variable
     ND_NUM,        // integer
+    ND_RETURN,     // return
 } NodeKind;
 
 typedef struct Node Node;
@@ -43,8 +45,18 @@ struct Node
     NodeKind kind;
     Node *lhs;
     Node *rhs;
-    int val; // used if kind == ND_NUM
+    int val;    // used if kind == ND_NUM
     int offset; // stack offset for variable(ND_LVAR)
+};
+
+typedef struct LVar LVar;
+
+struct LVar
+{ // local variable list presented by linked list
+    LVar *next;
+    char *name;
+    int len;
+    int offset;
 };
 
 void error_at(char *loc, char *fmt, ...);
@@ -68,7 +80,10 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
+
+LVar *find_lvar(Token *tok);
 void tokenize();
+int is_alnum(char c);
 
 void gen(Node *node);
 /*
@@ -77,5 +92,6 @@ void gen(Node *node);
 extern Token *token; // current token
 extern char *user_input;
 extern Node *code[100];
+extern LVar *locals;
 
 #endif
