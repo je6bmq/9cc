@@ -42,7 +42,7 @@ void error(char *fmt, ...)
  */
 bool consume(char *op)
 {
-    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN) || strlen(op) != token->len || memcmp(token->str, op, token->len))
+    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN && token->kind != TK_IF && token->kind != TK_ELSE && token->kind != TK_FOR && token->kind != TK_WHILE) || strlen(op) != token->len || memcmp(token->str, op, token->len))
     {
         return false;
     }
@@ -69,7 +69,7 @@ Token *consume_ident()
  */
 void expect(char *op)
 {
-    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN) || strlen(op) != token->len || memcmp(token->str, op, token->len))
+    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN && token->kind != TK_IF && token->kind != TK_ELSE && token->kind != TK_FOR && token->kind != TK_WHILE) || strlen(op) != token->len || memcmp(token->str, op, token->len))
     {
         error_at(token->str, "'%s'ではありません", op);
     }
@@ -177,7 +177,13 @@ void tokenize()
 
         if ('a' <= *p && *p <= 'z')
         {
-            cur = new_token(TK_IDENT, cur, p++, 1);
+            int name_count = 0;
+            while ('a' <= *(p + name_count) && *(p + name_count) <= 'z')
+            {
+                name_count++;
+            }
+            cur = new_token(TK_IDENT, cur, p, name_count);
+            p+=name_count;
             continue;
         }
 
@@ -219,6 +225,14 @@ void program()
 Node *stmt()
 {
     Node *node;
+
+    if (consume("if"))
+    {
+        expect("(");
+        node->lhs = expr();
+        expect(")");
+        node->rhs = stmt();
+    }
 
     if (consume("return"))
     {

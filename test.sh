@@ -40,5 +40,6 @@ try 3 'a = 3;'
 try 22 'b = 5 * 6 - 8;'
 try 14 'a = 3; b = 5 * 6 - 8; a + b /2;'
 try 14 'a = 3; b = 5 * 6 - 8; return a + b /2;'
+try 3 'foo = 1; fuga=2; return foo + fuga;'
 
 echo "OK"
