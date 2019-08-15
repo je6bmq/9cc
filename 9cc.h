@@ -41,10 +41,12 @@ typedef enum
     ND_NUM,        // integer
     ND_RETURN,     // return
     ND_IF,         // if statement
-    // ND_ELSE,       // else statement
     ND_WHILE,      // while statement
     ND_FOR,        // while statement
+    ND_BLOCK,      // code block
 } NodeKind;
+
+typedef struct NodeReferenceVector NodeReferenceVector;
 
 typedef struct Node Node;
 
@@ -56,9 +58,20 @@ struct Node
     Node *rhs;
     Node *other;
     Node *another;
-    int val;    // used if kind == ND_NUM
-    int offset; // stack offset for variable(ND_LVAR)
+    int val;                         // used if kind == ND_NUM
+    int offset;                      // stack offset for variable(ND_LVAR)
+    NodeReferenceVector *statements; // used if block code
 };
+
+struct NodeReferenceVector
+{
+    int size;
+    int capacity;
+    Node **elements;
+    int element_size;
+};
+
+
 
 typedef struct LVar LVar;
 
@@ -97,6 +110,10 @@ void tokenize();
 int is_alnum(char c);
 
 void gen(Node *node);
+
+NodeReferenceVector *new_vec();
+void push(NodeReferenceVector *vector, Node *new_element);
+Node *get(NodeReferenceVector *vector, int index);
 /*
     global variables
  */

@@ -178,7 +178,7 @@ void tokenize()
             continue;
         }
 
-        if (memcmp(p, ";", 1) == 0 || memcmp(p, "(", 1) == 0 || memcmp(p, ")", 1) == 0)
+        if (memcmp(p, ";", 1) == 0 || memcmp(p, "(", 1) == 0 || memcmp(p, ")", 1) == 0 || memcmp(p, "{", 1) == 0 || memcmp(p, "}", 1) == 0)
         {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
@@ -325,6 +325,19 @@ Node *stmt()
         node->other = updater;
         node->another = statement;
 
+        return node;
+    }
+
+    if (consume("{"))
+    {
+        node = new_node(ND_BLOCK, NULL, NULL);
+        NodeReferenceVector *vector = new_vec();
+        while (!consume("}"))
+        {
+            Node *statement = stmt();
+            push(vector, statement);
+        }
+        node->statements = vector;
         return node;
     }
 

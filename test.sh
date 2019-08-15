@@ -46,4 +46,7 @@ try 4 'a = 3; if(a<4) a=4;'
 try 5 'hoge = 0; while(hoge<5) hoge=hoge+1;'
 try 4 'hoge=2; hoge=hoge+hoge;'
 try 55 'hoge = 0; for(i=0;i<=10;i=i+1) hoge = hoge + i;'
+try 55 'hoge = 0; for(i=0;i<=10;i=i+1) hoge = hoge + i;'
+try 10 '{a = 5; a = a + a; a;}'
+try 20 'a = 0; while(a<20) {a = a + 1; }'
 echo "OK"
