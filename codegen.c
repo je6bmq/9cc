@@ -91,7 +91,8 @@ void gen(Node *node)
         printf("  .Lend%d:\n", node->id);
         return;
     case ND_BLOCK:
-        for(int i = 0; i < node->statements->size; i++) {
+        for (int i = 0; i < node->statements->size; i++)
+        {
             gen(get(node->statements, i));
             printf("    pop rax\n");
         }
