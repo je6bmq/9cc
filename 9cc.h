@@ -44,11 +44,20 @@ typedef enum
     ND_WHILE,      // while statement
     ND_FOR,        // while statement
     ND_BLOCK,      // code block
+    ND_CALL_FUNC,  // call function
 } NodeKind;
 
 typedef struct NodeReferenceVector NodeReferenceVector;
 
 typedef struct Node Node;
+
+typedef struct Function Function;
+
+struct Function
+{
+    char *name;
+    int length;
+};
 
 struct Node
 {
@@ -60,7 +69,8 @@ struct Node
     Node *another;
     int val;                         // used if kind == ND_NUM
     int offset;                      // stack offset for variable(ND_LVAR)
-    NodeReferenceVector *statements; // used if block code
+    NodeReferenceVector *statements; // used if block code (ND_BLOCK)
+    Function *function;             // used if ND_CALL_FUNC
 };
 
 struct NodeReferenceVector
@@ -70,8 +80,6 @@ struct NodeReferenceVector
     Node **elements;
     int element_size;
 };
-
-
 
 typedef struct LVar LVar;
 

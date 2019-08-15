@@ -97,6 +97,16 @@ void gen(Node *node)
             printf("    pop rax\n");
         }
         return;
+    case ND_CALL_FUNC:
+        printf("    mov eax, 0x0\n");
+        printf("    call ");
+        for(int i = 0; i< node->function->length; i++) {
+            printf("%c", node->function->name[i]);
+        }
+        printf("\n");
+        printf("    mov eax, 0x0\n");
+        // printf("    pop rax\n");
+        return;
     }
 
     gen(node->lhs);

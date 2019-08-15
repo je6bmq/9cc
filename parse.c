@@ -508,6 +508,16 @@ Node *term()
             node->offset = lvar->offset;
             locals = lvar;
         }
+        if(consume("(")) {
+            node->kind = ND_CALL_FUNC;
+            lvar->offset -=8; // distinguish with valiable 
+            node->offset -=8; 
+            Function *function = (Function*)calloc(1,sizeof(Function));
+            function->name = tok->str;
+            function->length = tok->len;
+            node->function = function;
+            expect(")");
+        }
         return node;
     }
 
