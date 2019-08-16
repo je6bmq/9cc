@@ -29,14 +29,14 @@ int main(int argc, char **argv)
     for (int i = 0; code[i]; i++)
     {
         gen(code[i]);
-        if (code[i]->function == NULL)
+        if (code[i]->kind != ND_RETURN)
         {
             printf("    pop rax\n");
         }
     }
 
-    printf("    mov rsp, rbp\n");
-    printf("    pop rbp\n");
-    printf("    ret\n");
+    // printf("    mov rsp, rbp\n");
+    // printf("    pop rbp\n");
+    // printf("    ret\n");
     return 0;
 }

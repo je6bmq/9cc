@@ -53,13 +53,16 @@ void gen(Node *node)
         printf("    cmp rax, 0\n");
         printf("    je  .Lend%d\n", node->id);
         gen(node->rhs);
+        printf("    pop rax\n");
         if (node->other)
         {
             printf("    jmp  .Lend%d\n", node->id);
             printf("  .Lelse%d:\n", node->id);
             gen(node->other);
+            printf("    pop rax\n");
         }
         printf("  .Lend%d:\n", node->id);
+        printf("    push rax\n");
         return;
     case ND_WHILE:
         printf(".Lbegin%d:\n", node->id);
@@ -68,8 +71,10 @@ void gen(Node *node)
         printf("    cmp rax, 0\n");
         printf("    je  .Lend%d\n", node->id);
         gen(node->rhs);
+        printf("    pop rax\n");
         printf("    jmp .Lbegin%d\n", node->id);
         printf("  .Lend%d:\n", node->id);
+        printf("    push rax\n");
         return;
     case ND_FOR:
         if (node->lhs != NULL)
@@ -82,6 +87,7 @@ void gen(Node *node)
         printf("    cmp rax, 0\n");
         printf("    je  .Lend%d\n", node->id);
         gen(node->another); // statement part
+        printf("    pop rax\n");
         if (node->other != NULL)
         {
             gen(node->other);        // update variable part
@@ -96,14 +102,19 @@ void gen(Node *node)
             gen(get(node->statements, i));
             printf("    pop rax\n");
         }
+        printf("    push rax\n");
         return;
     case ND_CALL_FUNC:
         printf("    mov rax, 0x0\n");
         printf("    call ");
-        for(int i = 0; i< node->function->length; i++) {
+        for (int i = 0; i < node->function->length; i++)
+        {
             printf("%c", node->function->name[i]);
         }
         printf("\n");
+        printf("    pop rax\n");
+        printf("    push rax\n");
+
         return;
     }
 
