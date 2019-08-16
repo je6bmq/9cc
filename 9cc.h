@@ -66,6 +66,17 @@ struct FunctionTableLinkedList {
     FunctionTable *value;
 };
 
+
+typedef struct Function Function;
+typedef struct LVar LVar;
+
+struct Function {
+    char* name;
+    int length;
+    LVar* arguments;
+    NodeReferenceVector* statements;
+};
+
 struct Node
 {
     int id;
@@ -88,8 +99,6 @@ struct NodeReferenceVector
     int element_size;
 };
 
-typedef struct LVar LVar;
-
 struct LVar
 { // local variable list presented by linked list
     LVar *next;
@@ -106,7 +115,9 @@ int expect_number();
 bool at_eof();
 
 /* --production rule--
-    program = stmt*
+
+    program = function*
+    function = ident ( ident,*) { stmt*}
     stmt    = expr ";"
             | "{" stmt* "}"
             | "return" expr ";"
@@ -122,6 +133,7 @@ bool at_eof();
 */
 
 void program();
+Function* function();
 Node *stmt();
 Node *assign();
 Node *expr();
@@ -152,6 +164,7 @@ Node *get(NodeReferenceVector *vector, int index);
 extern Token *token; // current token
 extern char *user_input;
 extern Node *code[100];
+extern Function* functions[100];
 extern LVar *locals;
 extern FunctionTableLinkedList *function_table;
 extern int current_node_id;

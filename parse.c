@@ -9,9 +9,11 @@
 Token *token; // current token
 char *user_input;
 Node *code[100];
+Function *functions[100];
 LVar *locals;
 FunctionTableLinkedList *function_table;
 int current_node_id;
+
 
 void error_at(char *loc, char *fmt, ...)
 {
@@ -179,7 +181,7 @@ void tokenize()
             continue;
         }
 
-        if (memcmp(p, ";", 1) == 0 || memcmp(p, "(", 1) == 0 || memcmp(p, ")", 1) == 0 || memcmp(p, "{", 1) == 0 || memcmp(p, "}", 1) == 0)
+        if (memcmp(p, ";", 1) == 0 || memcmp(p, "(", 1) == 0 || memcmp(p, ")", 1) == 0 || memcmp(p, "{", 1) == 0 || memcmp(p, "}", 1) == 0 || memcmp(p, ",", 1) == 0)
         {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
@@ -243,14 +245,91 @@ Node *new_node_num(int val)
     return node;
 }
 
+Function *function()
+{
+    Function *func = (Function *)calloc(1, sizeof(Function));
+
+    func->statements = new_vec();
+    if (token->kind != TK_IDENT)
+    {
+        fprintf(stderr, "関数名ではありません．");
+        for (int i = 0; i < token->len; i++)
+        {
+            fprintf(stderr, "%c", token->str[i]);
+        }
+        fprintf(stderr, "\n");
+        exit(1);
+    }
+
+    if (function_table == NULL)
+    {
+        FunctionTableLinkedList *list = (FunctionTableLinkedList *)calloc(1, sizeof(FunctionTableLinkedList));
+
+        FunctionTable *func_table = (FunctionTable *)calloc(1, sizeof(FunctionTable));
+        func_table->name = token->str;
+        func_table->length = token->len;
+        list->value = func_table;
+        function_table = list;
+    }
+    func->name = token->str;
+    func->length = token->len;
+    token = token->next;
+    expect("(");
+    LVar *arguments = (LVar *)calloc(1, sizeof(LVar));
+    arguments->offset = 0;
+    if (!consume(")"))
+    {
+        while (true)
+        {
+            LVar *arg = (LVar *)calloc(1, sizeof(LVar));
+            if (token->kind != TK_IDENT)
+            {
+                fprintf(stderr, "変数名が不正です．\n");
+                exit(1);
+            }
+            arg->name = token->str;
+            arg->len = token->len;
+            arg->offset = arguments->offset + 0x10;
+            arg->next = arguments;
+            arguments = arg;
+            token = token->next;
+            if (consume(","))
+            {
+                continue;
+            }
+            else if (consume(")"))
+            {
+                break;
+            }
+            else
+            {
+                fprintf(stderr, "不正なトークンです．\n");
+                exit(1);
+            }
+        }
+    }
+
+    locals = arguments; // limit local variables in current scope
+    expect("{");
+    while (!consume("}"))
+    {
+        push(func->statements, stmt());
+    }
+    func->arguments = locals; // set "changed" local variables in current function. 
+    return func;
+}
+
 void program()
 {
     int i = 0;
     while (!at_eof())
     {
-        code[i++] = stmt();
+        // code[i++] = stmt();
+
+        functions[i++] = function();
     }
-    code[i] = NULL;
+    // code[i] = NULL;
+    functions[i] = NULL;
 }
 
 Node *stmt()
@@ -494,24 +573,24 @@ Node *term()
 
         if (consume("("))
         {
-            FunctionTable *function = find_function(tok);
+            FunctionTable *func = find_function(tok);
             node->kind = ND_CALL_FUNC;
             if (function)
             {
             }
             else
             {
-                function = (FunctionTable *)calloc(1, sizeof(FunctionTable));
-                function->name = tok->str;
-                function->length = tok->len;
+                func = (FunctionTable *)calloc(1, sizeof(FunctionTable));
+                func->name = tok->str;
+                func->length = tok->len;
 
-                FunctionTableLinkedList* list = (FunctionTableLinkedList*)calloc(1,sizeof(FunctionTableLinkedList));
-                list->next = function;
-                list->value = function;
+                FunctionTableLinkedList *list = (FunctionTableLinkedList *)calloc(1, sizeof(FunctionTableLinkedList));
+                list->next = function_table;
+                list->value = func;
                 function_table = list;
             }
 
-            node->function_table = function_table;
+            node->function_table = func;
             expect(")");
         }
         else
@@ -525,7 +604,7 @@ Node *term()
             }
             else
             {
-                lvar = calloc(1, sizeof(LVar)); 
+                lvar = calloc(1, sizeof(LVar));
                 lvar->next = locals;
                 lvar->name = tok->str;
                 lvar->len = tok->len;
