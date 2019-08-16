@@ -59,6 +59,13 @@ struct Function
     int length;
 };
 
+typedef struct FunctionLinkedList FunctionLinkedList;
+
+struct FunctionLinkedList {
+    FunctionLinkedList *next;
+    Function *value;
+};
+
 struct Node
 {
     int id;
@@ -114,6 +121,7 @@ Node *new_node_num(int val);
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 
 LVar *find_lvar(Token *tok);
+Function *find_function(Token *tok);
 void tokenize();
 int is_alnum(char c);
 
@@ -129,6 +137,7 @@ extern Token *token; // current token
 extern char *user_input;
 extern Node *code[100];
 extern LVar *locals;
+extern FunctionLinkedList *functions;
 extern int current_node_id;
 
 #endif
