@@ -105,6 +105,22 @@ void expect(char *op);
 int expect_number();
 bool at_eof();
 
+/* --production rule--
+    program = stmt*
+    stmt    = expr ";"
+            | "{" stmt* "}"
+            | "return" expr ";"
+    expr       = equality
+    equality   = relational ("==" relational | "!=" relational)*
+    relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+    add        = mul ("+" mul | "-" mul)*
+    mul        = unary ("*" unary | "/" unary)*
+    unary      = ("+" | "-")? term
+    term       = num 
+               | ident ("(" ")")?
+               | "(" expr ")"
+*/
+
 void program();
 Node *stmt();
 Node *assign();
