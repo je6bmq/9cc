@@ -80,6 +80,7 @@ void gen(Node *node)
         if (node->lhs != NULL)
         {
             gen(node->lhs); // initialize part
+            printf("    pop rax\n");
         }
         printf(".Lbegin%d:\n", node->id);
         gen(node->rhs); // condition part
@@ -88,6 +89,7 @@ void gen(Node *node)
         printf("    je  .Lend%d\n", node->id);
         gen(node->another); // statement part
         printf("    pop rax\n");
+        printf("    push rax\n");
         if (node->other != NULL)
         {
             gen(node->other);        // update variable part
@@ -95,6 +97,7 @@ void gen(Node *node)
         }
         printf("    jmp .Lbegin%d\n", node->id);
         printf("  .Lend%d:\n", node->id);
+        printf("    pop rax\n");
         return;
     case ND_BLOCK:
         for (int i = 0; i < node->statements->size; i++)
@@ -112,7 +115,6 @@ void gen(Node *node)
             printf("%c", node->function->name[i]);
         }
         printf("\n");
-        printf("    pop rax\n");
         printf("    push rax\n");
 
         return;
