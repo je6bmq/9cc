@@ -10,7 +10,7 @@ Token *token; // current token
 char *user_input;
 Node *code[100];
 LVar *locals;
-FunctionLinkedList *functions;
+FunctionTableLinkedList *function_table;
 int current_node_id;
 
 void error_at(char *loc, char *fmt, ...)
@@ -494,24 +494,24 @@ Node *term()
 
         if (consume("("))
         {
-            Function *function = find_function(tok);
+            FunctionTable *function = find_function(tok);
             node->kind = ND_CALL_FUNC;
             if (function)
             {
             }
             else
             {
-                function = (Function *)calloc(1, sizeof(Function));
+                function = (FunctionTable *)calloc(1, sizeof(FunctionTable));
                 function->name = tok->str;
                 function->length = tok->len;
 
-                FunctionLinkedList* list = (FunctionLinkedList*)calloc(1,sizeof(FunctionLinkedList));
-                list->next = functions;
+                FunctionTableLinkedList* list = (FunctionTableLinkedList*)calloc(1,sizeof(FunctionTableLinkedList));
+                list->next = function;
                 list->value = function;
-                functions = list;
+                function_table = list;
             }
 
-            node->function = function;
+            node->function_table = function_table;
             expect(")");
         }
         else
@@ -534,41 +534,16 @@ Node *term()
                 locals = lvar;
             }
         }
-        // LVar *lvar = find_lvar(tok);
-        // if (lvar)
-        // {
-        //     // found
-        //     node->offset = lvar->offset;
-        // }
-        // else
-        // {
-        //     lvar = calloc(1, sizeof(LVar));
-        //     lvar->next = locals;
-        //     lvar->name = tok->str;
-        //     lvar->len = tok->len;
-        //     lvar->offset = (locals ? locals->offset : 0) + 8;
-        //     node->offset = lvar->offset;
-        //     locals = lvar;
-        // }
-        // if(consume("(")) {
-        //     node->kind = ND_CALL_FUNC;
-        //     lvar->offset -=8; // distinguish with valiable
-        //     node->offset -=8;
-        //     Function *function = (Function*)calloc(1,sizeof(Function));
-        //     function->name = tok->str;
-        //     function->length = tok->len;
-        //     node->function = function;
-        //     expect(")");
-        // }
+
         return node;
     }
 
     return new_node_num(expect_number());
 }
 
-Function *find_function(Token *tok)
+FunctionTable *find_function(Token *tok)
 {
-    for (FunctionLinkedList *list = functions; list; list = list->next)
+    for (FunctionTableLinkedList *list = function_table; list; list = list->next)
     {
         if (list->value->length == tok->len && !memcmp(tok->str, list->value->name, tok->len))
         {

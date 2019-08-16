@@ -110,9 +110,9 @@ void gen(Node *node)
     case ND_CALL_FUNC:
         printf("    mov rax, 0x0\n");
         printf("    call ");
-        for (int i = 0; i < node->function->length; i++)
+        for (int i = 0; i < node->function_table->length; i++)
         {
-            printf("%c", node->function->name[i]);
+            printf("%c", node->function_table->name[i]);
         }
         printf("\n");
         printf("    push rax\n");

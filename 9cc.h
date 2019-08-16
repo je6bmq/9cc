@@ -51,19 +51,19 @@ typedef struct NodeReferenceVector NodeReferenceVector;
 
 typedef struct Node Node;
 
-typedef struct Function Function;
+typedef struct FunctionTable FunctionTable;
 
-struct Function
+struct FunctionTable
 {
     char *name;
     int length;
 };
 
-typedef struct FunctionLinkedList FunctionLinkedList;
+typedef struct FunctionTableLinkedList FunctionTableLinkedList;
 
-struct FunctionLinkedList {
-    FunctionLinkedList *next;
-    Function *value;
+struct FunctionTableLinkedList {
+    FunctionTableLinkedList *next;
+    FunctionTable *value;
 };
 
 struct Node
@@ -77,7 +77,7 @@ struct Node
     int val;                         // used if kind == ND_NUM
     int offset;                      // stack offset for variable(ND_LVAR)
     NodeReferenceVector *statements; // used if block code (ND_BLOCK)
-    Function *function;             // used if ND_CALL_FUNC
+    FunctionTable *function_table;             // used if ND_CALL_FUNC
 };
 
 struct NodeReferenceVector
@@ -121,7 +121,7 @@ Node *new_node_num(int val);
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 
 LVar *find_lvar(Token *tok);
-Function *find_function(Token *tok);
+FunctionTable *find_function(Token *tok);
 void tokenize();
 int is_alnum(char c);
 
@@ -137,7 +137,7 @@ extern Token *token; // current token
 extern char *user_input;
 extern Node *code[100];
 extern LVar *locals;
-extern FunctionLinkedList *functions;
+extern FunctionTableLinkedList *function_table;
 extern int current_node_id;
 
 #endif
