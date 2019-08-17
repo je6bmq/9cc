@@ -14,7 +14,6 @@ LVar *locals;
 FunctionTableLinkedList *function_table;
 int current_node_id;
 
-
 void error_at(char *loc, char *fmt, ...)
 {
     va_list ap;
@@ -275,8 +274,9 @@ Function *function()
     func->length = token->len;
     token = token->next;
     expect("(");
-    LVar *arguments = (LVar *)calloc(1, sizeof(LVar));
-    arguments->offset = 0;
+    // LVar *arguments = (LVar *)calloc(1, sizeof(LVar));
+    // arguments->offset = 0;
+    LVar *arguments = NULL;
     if (!consume(")"))
     {
         while (true)
@@ -289,9 +289,22 @@ Function *function()
             }
             arg->name = token->str;
             arg->len = token->len;
-            arg->offset = arguments->offset + 0x10;
-            arg->next = arguments;
-            arguments = arg;
+            arg->offset = (arguments ? arguments->offset : 0) + 0x10;
+            // arg->next = arguments;
+            if (!arguments)
+            {
+                arguments = arg;
+            }
+            else
+            {
+                LVar *last_arg;
+                for (LVar *var = arguments; var; var = var->next)
+                {
+                    last_arg = var;
+                }
+                last_arg->next = arg;
+            }
+
             token = token->next;
             if (consume(","))
             {
@@ -315,7 +328,7 @@ Function *function()
     {
         push(func->statements, stmt());
     }
-    func->arguments = locals; // set "changed" local variables in current function. 
+    func->arguments = locals; // set "changed" local variables in current function.
     return func;
 }
 
@@ -574,7 +587,16 @@ Node *term()
         if (consume("("))
         {
             FunctionTable *func = find_function(tok);
+
             node->kind = ND_CALL_FUNC;
+            node->lhs = (Node *)calloc(1, sizeof(Node));
+            node->rhs = (Node *)calloc(1, sizeof(Node));
+            node->other = (Node *)calloc(1, sizeof(Node));
+            node->another = (Node *)calloc(1, sizeof(Node));
+            node->option1 = (Node *)calloc(1, sizeof(Node));
+            node->option2 = (Node *)calloc(1, sizeof(Node));
+
+            Node **arguments[6] = {&(node->lhs), &(node->rhs), &(node->other), &(node->another), &(node->option1), &(node->option2)};
             if (function)
             {
             }
@@ -591,7 +613,35 @@ Node *term()
             }
 
             node->function_table = func;
-            expect(")");
+
+            int arg_index = 0;
+            if (!consume(")"))
+            {
+                while (true)
+                {
+                    *arguments[arg_index++] = expr();
+                    if (arg_index >= 6)
+                    {
+                        fprintf(stderr, "引数過多です．\n");
+                        exit(1);
+                    }
+                    if (consume(")"))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        expect(",");
+                    }
+                }
+            }
+
+            for (int i = arg_index; i < 6; i++)
+            {
+                free(*arguments[i]);
+                *arguments[i] = NULL;
+            }
+            // expect(")");
         }
         else
         {
@@ -604,13 +654,31 @@ Node *term()
             }
             else
             {
-                lvar = calloc(1, sizeof(LVar));
-                lvar->next = locals;
-                lvar->name = tok->str;
-                lvar->len = tok->len;
-                lvar->offset = (locals ? locals->offset : 0) + 0x10;
-                node->offset = lvar->offset;
-                locals = lvar;
+                LVar *lvar_next = calloc(1, sizeof(LVar));
+                for (LVar *var = locals; var; var = var->next)
+                {
+                    lvar = var;
+                }
+                lvar_next->name = tok->str;
+                lvar_next->len = tok->len;
+                lvar_next->offset = (lvar ? lvar->offset : 0) + 0x10;
+                node->offset = lvar_next->offset;
+
+                if (lvar)
+                {
+                    lvar->next = lvar_next;
+                }
+                else
+                {
+                    if (locals)
+                    {
+                        locals->next = lvar_next;
+                    }
+                    else
+                    {
+                        locals = lvar_next;
+                    }
+                }
             }
         }
 

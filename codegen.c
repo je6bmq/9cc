@@ -108,7 +108,15 @@ void gen(Node *node)
         printf("    push rax\n");
         return;
     case ND_CALL_FUNC:
-        printf("    mov rax, 0x0\n");
+    {
+        Node **arguments[6] = {&(node->lhs), &(node->rhs), &(node->other), &(node->another), &(node->option1), &(node->option2)};
+        char *registers[6] = {"rdi", "rsi", "rdx", "rcx", "c8", "r9"};
+        for (int i = 0; *arguments[i] != NULL; i++)
+        {
+            gen(*arguments[i]);
+            printf("    pop rax\n");
+            printf("    mov %s, rax\n", registers[i]);
+        }
         printf("    call ");
         for (int i = 0; i < node->function_table->length; i++)
         {
@@ -116,7 +124,7 @@ void gen(Node *node)
         }
         printf("\n");
         printf("    push rax\n");
-
+    }
         return;
     }
 

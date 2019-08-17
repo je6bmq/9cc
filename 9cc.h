@@ -85,6 +85,8 @@ struct Node
     Node *rhs;
     Node *other;
     Node *another;
+    Node *option1;
+    Node *option2;
     int val;                         // used if kind == ND_NUM
     int offset;                      // stack offset for variable(ND_LVAR)
     NodeReferenceVector *statements; // used if block code (ND_BLOCK)
@@ -128,7 +130,7 @@ bool at_eof();
     mul        = unary ("*" unary | "/" unary)*
     unary      = ("+" | "-")? term
     term       = num 
-               | ident ("(" ")")?
+               | ident ("(" expr,* ")")?
                | "(" expr ")"
 */
 

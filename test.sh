@@ -49,4 +49,5 @@ try 10 'main(){{a = 5; a = a + a; return a;}}'
 try 20 'main(){a = 0; while(a<20) a = a + 1; return a;}'
 try 20 'main(){a = 0; while(a<20) {a = a + 1; } return a;}'
 try 110 'main(){hoge = 0; for(i=0;i<=10;i=i+1) {hoge = hoge + i;hoge = hoge + i;} return hoge;}'
+try 8 'foo(x,y) {return x+y;} main(){hoge = 0; a=3; b=5; hoge=foo(a,b); return hoge;}'
 echo "OK"

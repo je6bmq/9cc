@@ -48,7 +48,8 @@ int main(int argc, char **argv)
             printf(",");
         }
     }
-    printf("\n");
+    printf("\n\n");
+    char *registers[6] = {"rdi", "rsi", "rdx", "rcx", "c8", "r9"};
 
     for (int i = 0; functions[i]; i++)
     {
@@ -56,10 +57,31 @@ int main(int argc, char **argv)
         {
             printf("%c", functions[i]->name[j]);
         }
+
+        int offset = 0;
+        for (LVar *var = functions[i]->arguments; var; var = var->next)
+        {
+            offset = var->offset;
+        }
         printf(":\n");
         printf("    push rbp\n");
         printf("    mov rbp, rsp\n");
-        printf("    sub rsp, %d\n", functions[i]->arguments ? functions[i]->arguments->offset : 0);
+        printf("    sub rsp, %d\n", offset);
+
+        int arg_index = 0;
+        for (LVar *var = functions[i]->arguments; var; var = var->next)
+        {
+            if (arg_index > 5)
+            {
+                fprintf(stderr, "引数過多です．\n");
+                exit(1);
+            }
+
+            printf("    mov rax, rbp\n");
+            printf("    sub rax, %d\n", var->offset);
+            printf("    mov [rax], %s\n", registers[arg_index++]);
+        }
+
         for (int j = 0; j < functions[i]->statements->size; j++)
         {
             Node *statement = get(functions[i]->statements, j);
