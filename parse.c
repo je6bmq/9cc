@@ -289,11 +289,18 @@ Function *function()
             }
             arg->name = token->str;
             arg->len = token->len;
-            arg->offset = (arguments ? arguments->offset : 0) + 0x10;
-            // arg->next = arguments;
-            if (!arguments)
+
+            int current_offset = 0;
+            for (LVar *var = arguments; var; var = var->next)
+            {
+                current_offset = var->offset;
+            }
+            arg->offset = current_offset + 0x10;
+
+            if (arguments == NULL)
             {
                 arguments = arg;
+                arguments->next = NULL;
             }
             else
             {
