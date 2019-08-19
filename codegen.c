@@ -51,7 +51,15 @@ void gen(Node *node)
         gen(node->lhs); // if condition
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
-        printf("    je  .Lend%d\n", node->id);
+        if (node->other)
+        {
+            printf("    je  .Lelse%d\n", node->id);
+        }
+        else
+        {
+            printf("    je  .Lend%d\n", node->id);
+        }
+
         gen(node->rhs);
         printf("    pop rax\n");
         if (node->other)
@@ -111,11 +119,18 @@ void gen(Node *node)
     {
         Node **arguments[6] = {&(node->lhs), &(node->rhs), &(node->other), &(node->another), &(node->option1), &(node->option2)};
         char *registers[6] = {"rdi", "rsi", "rdx", "rcx", "c8", "r9"};
+        int num_arg = 0;
         for (int i = 0; *arguments[i] != NULL; i++)
         {
             gen(*arguments[i]);
             printf("    pop rax\n");
-            printf("    mov %s, rax\n", registers[i]);
+            // printf("    mov %s, rax\n", registers[i]);
+            printf("    push rax\n");
+            num_arg++;
+        }
+        for (int i = num_arg - 1; i >= 0; i--)
+        {
+            printf("    pop %s\n", registers[i]);
         }
         printf("    call ");
         for (int i = 0; i < node->function_table->length; i++)

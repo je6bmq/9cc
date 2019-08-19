@@ -604,7 +604,7 @@ Node *term()
             node->option2 = (Node *)calloc(1, sizeof(Node));
 
             Node **arguments[6] = {&(node->lhs), &(node->rhs), &(node->other), &(node->another), &(node->option1), &(node->option2)};
-            if (function)
+            if (func)
             {
             }
             else
