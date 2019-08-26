@@ -259,24 +259,33 @@ Function *function()
         fprintf(stderr, "\n");
         exit(1);
     }
+    FunctionTableLinkedList *list = (FunctionTableLinkedList *)calloc(1, sizeof(FunctionTableLinkedList));
 
+    FunctionTable *func_table = (FunctionTable *)calloc(1, sizeof(FunctionTable));
+    func_table->name = token->str;
+    func_table->length = token->len;
+    list->value = func_table;
     if (function_table == NULL)
     {
-        FunctionTableLinkedList *list = (FunctionTableLinkedList *)calloc(1, sizeof(FunctionTableLinkedList));
 
-        FunctionTable *func_table = (FunctionTable *)calloc(1, sizeof(FunctionTable));
-        func_table->name = token->str;
-        func_table->length = token->len;
-        list->value = func_table;
         function_table = list;
+    }
+    else
+    {
+        FunctionTableLinkedList *table_list;
+        for (FunctionTableLinkedList *table = function_table; table; table = table->next)
+        {
+            table_list = table;
+        }
+        table_list->next = list;
     }
     func->name = token->str;
     func->length = token->len;
     token = token->next;
     expect("(");
-    // LVar *arguments = (LVar *)calloc(1, sizeof(LVar));
-    // arguments->offset = 0;
     LVar *arguments = NULL;
+    func_table->arguments = arguments;
+    
     if (!consume(")"))
     {
         while (true)
@@ -328,14 +337,20 @@ Function *function()
             }
         }
     }
+    locals = (LVar*)calloc(1,sizeof(LVar));
 
-    locals = arguments; // limit local variables in current scope
+    func->arguments = arguments;
+    LVar* arg_last = locals;
+    for(LVar* arg = arguments; arg; arg= arg->next) {
+        arg_last->next = arg;
+        arg_last = arg_last->next;
+    } // arguments are also local variable.
     expect("{");
     while (!consume("}"))
     {
         push(func->statements, stmt());
     }
-    func->arguments = locals; // set "changed" local variables in current function.
+    func->local_variables = locals; // set local variables in current function.
     return func;
 }
 

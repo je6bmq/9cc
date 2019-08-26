@@ -50,13 +50,15 @@ typedef enum
 typedef struct NodeReferenceVector NodeReferenceVector;
 
 typedef struct Node Node;
-
 typedef struct FunctionTable FunctionTable;
+typedef struct Function Function;
+typedef struct LVar LVar;
 
 struct FunctionTable
 {
     char *name;
     int length;
+    LVar* arguments;
 };
 
 typedef struct FunctionTableLinkedList FunctionTableLinkedList;
@@ -66,14 +68,11 @@ struct FunctionTableLinkedList {
     FunctionTable *value;
 };
 
-
-typedef struct Function Function;
-typedef struct LVar LVar;
-
 struct Function {
     char* name;
     int length;
     LVar* arguments;
+    LVar* local_variables;
     NodeReferenceVector* statements;
 };
 

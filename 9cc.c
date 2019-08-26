@@ -59,7 +59,7 @@ int main(int argc, char **argv)
         }
 
         int offset = 0;
-        for (LVar *var = functions[i]->arguments; var; var = var->next)
+        for (LVar *var = functions[i]->local_variables; var; var = var->next)
         {
             offset = var->offset;
         }
