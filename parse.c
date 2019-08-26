@@ -284,8 +284,7 @@ Function *function()
     token = token->next;
     expect("(");
     LVar *arguments = NULL;
-    func_table->arguments = arguments;
-    
+
     if (!consume(")"))
     {
         while (true)
@@ -293,8 +292,7 @@ Function *function()
             LVar *arg = (LVar *)calloc(1, sizeof(LVar));
             if (token->kind != TK_IDENT)
             {
-                fprintf(stderr, "変数名が不正です．\n");
-                exit(1);
+                error_at(token->str, "引数の変数名が不正です．");
             }
             arg->name = token->str;
             arg->len = token->len;
@@ -337,11 +335,12 @@ Function *function()
             }
         }
     }
-    locals = (LVar*)calloc(1,sizeof(LVar));
-
+    locals = (LVar *)calloc(1, sizeof(LVar));
+    func_table->arguments = arguments; // "arguments" indicates pointer, so this statement has to be placed after parsing arguments.
     func->arguments = arguments;
-    LVar* arg_last = locals;
-    for(LVar* arg = arguments; arg; arg= arg->next) {
+    LVar *arg_last = locals;
+    for (LVar *arg = arguments; arg; arg = arg->next)
+    {
         arg_last->next = arg;
         arg_last = arg_last->next;
     } // arguments are also local variable.
@@ -359,11 +358,8 @@ void program()
     int i = 0;
     while (!at_eof())
     {
-        // code[i++] = stmt();
-
         functions[i++] = function();
     }
-    // code[i] = NULL;
     functions[i] = NULL;
 }
 
@@ -618,12 +614,17 @@ Node *term()
             node->option1 = (Node *)calloc(1, sizeof(Node));
             node->option2 = (Node *)calloc(1, sizeof(Node));
 
+            bool is_declared_function = false;
+
             Node **arguments[6] = {&(node->lhs), &(node->rhs), &(node->other), &(node->another), &(node->option1), &(node->option2)};
             if (func)
             {
+                is_declared_function = true;
             }
             else
             {
+                // un-declared or in other file function
+                is_declared_function = false;
                 func = (FunctionTable *)calloc(1, sizeof(FunctionTable));
                 func->name = tok->str;
                 func->length = tok->len;
@@ -644,8 +645,7 @@ Node *term()
                     *arguments[arg_index++] = expr();
                     if (arg_index >= 6)
                     {
-                        fprintf(stderr, "引数過多です．\n");
-                        exit(1);
+                        error_at(token->str, "引数が多すぎます．");
                     }
                     if (consume(")"))
                     {
@@ -658,12 +658,53 @@ Node *term()
                 }
             }
 
+            if (is_declared_function)
+            {
+                LVar *arguments = func->arguments;
+                int count = 0;
+                for (LVar *arg = arguments; arg; arg = arg->next)
+                {
+                    count++;
+                }
+
+                if (arg_index != count)
+                {
+                    error_at(token->str, "引数の数が一致しません．\n");
+                }
+            }
+            else
+            {
+                // un-declared or in other file function
+                LVar *arguments;
+                char *tmp_arg_names[6] = {"a", "b", "c", "d", "e", "f"};
+                if (arg_index == 1)
+                {
+                    arguments = NULL;
+                }
+                else
+                {
+                    arguments = (LVar *)calloc(1, sizeof(LVar));
+                    arguments->len = 1;
+                    arguments->name = tmp_arg_names[6 - arg_index];
+                    arg_index--;
+                    LVar *args = arguments;
+                    for (int i = arg_index; i > 0; i--)
+                    {
+                        LVar *arg = (LVar *)calloc(1, sizeof(LVar));
+                        arg->len = 1;
+                        arg->name = tmp_arg_names[6 - arg_index];
+                        args->next = arg;
+                        args = arg;
+                    }
+                }
+                func->arguments = arguments;
+            }
+
             for (int i = arg_index; i < 6; i++)
             {
                 free(*arguments[i]);
                 *arguments[i] = NULL;
             }
-            // expect(")");
         }
         else
         {
