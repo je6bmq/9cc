@@ -65,6 +65,19 @@ Token *consume_ident()
         return tok;
     }
 }
+Token *expect_ident()
+{
+    if (token->kind != TK_IDENT || token->str[0] < 'a' || token->str[0] > 'z')
+    {
+        error_at(token->str, "変数名ではありません");
+    }
+    else
+    {
+        Token *tok = token;  // copy of current token
+        token = token->next; // step token to continuing process
+        return tok;
+    }
+}
 
 /*
     if next token is not reserved, abnormal exit.
@@ -203,6 +216,13 @@ void tokenize()
             continue;
         }
 
+        if (memcmp(p, "int", 3) == 0)
+        {
+            cur = new_token(TK_RESERVED, cur, p, 3);
+            p += 3;
+            continue;
+        }
+
         if (isdigit(*p))
         {
             cur = new_token(TK_NUM, cur, p, 1);
@@ -252,7 +272,7 @@ Node *new_node_num(int val)
 Function *function()
 {
     Function *func = (Function *)calloc(1, sizeof(Function));
-
+    expect("int");
     func->statements = new_vec();
     if (token->kind != TK_IDENT)
     {
@@ -294,6 +314,7 @@ Function *function()
     {
         while (true)
         {
+            expect("int");
             LVar *arg = (LVar *)calloc(1, sizeof(LVar));
             if (token->kind != TK_IDENT)
             {
@@ -460,8 +481,40 @@ Node *stmt()
     if (consume("return"))
     {
         node = calloc(1, sizeof(Node));
+        current_node_id++;
         node->kind = ND_RETURN;
         node->lhs = expr();
+    }
+    else if (consume("int"))
+    {
+        Token *tok = expect_ident();
+        LVar *lvar = (LVar *)calloc(1, sizeof(LVar));
+        LVar *lvar_next = (LVar *)calloc(1, sizeof(LVar));
+        for (LVar *var = locals; var; var = var->next)
+        {
+            lvar = var;
+        }
+        lvar_next->name = tok->str;
+        lvar_next->len = tok->len;
+        lvar_next->offset = (lvar ? lvar->offset : 0) + 0x10;
+        // node->offset = lvar_next->offset;
+
+        if (lvar)
+        {
+            lvar->next = lvar_next;
+        }
+        else
+        {
+            if (locals)
+            {
+                locals->next = lvar_next;
+            }
+            else
+            {
+                locals = lvar_next;
+            }
+        }
+        node = new_node(ND_DECL, NULL,NULL);
     }
     else
     {
@@ -730,31 +783,7 @@ Node *term()
             }
             else
             {
-                LVar *lvar_next = calloc(1, sizeof(LVar));
-                for (LVar *var = locals; var; var = var->next)
-                {
-                    lvar = var;
-                }
-                lvar_next->name = tok->str;
-                lvar_next->len = tok->len;
-                lvar_next->offset = (lvar ? lvar->offset : 0) + 0x10;
-                node->offset = lvar_next->offset;
-
-                if (lvar)
-                {
-                    lvar->next = lvar_next;
-                }
-                else
-                {
-                    if (locals)
-                    {
-                        locals->next = lvar_next;
-                    }
-                    else
-                    {
-                        locals = lvar_next;
-                    }
-                }
+                error_at(token->str, "未定義の変数を使用しています．\n");
             }
         }
 

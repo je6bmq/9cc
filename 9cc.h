@@ -47,6 +47,7 @@ typedef enum
     ND_CALL_FUNC,  // call function
     ND_ADDR,       // & (address operator)
     ND_DEREF,      //  * (dereference operator)
+    ND_DECL,       // variable declaration
 } NodeKind;
 
 typedef struct NodeReferenceVector NodeReferenceVector;
@@ -122,10 +123,11 @@ bool at_eof();
 /* --production rule--
 
     program = function*
-    function = ident ( ident,*) { stmt*}
+    function = "int" ident ( "int" ident,*) { stmt*}
     stmt    = expr ";"
             | "{" stmt* "}"
             | "return" expr ";"
+            | "int" ident ";"
     expr       = equality
     equality   = relational ("==" relational | "!=" relational)*
     relational = add ("<" add | "<=" add | ">" add | ">=" add)*
@@ -152,7 +154,8 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
-
+Token* consume_ident();
+Token* expect_ident();
 LVar *find_lvar(Token *tok);
 FunctionTable *find_function(Token *tok);
 void tokenize();
