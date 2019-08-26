@@ -45,6 +45,8 @@ typedef enum
     ND_FOR,        // while statement
     ND_BLOCK,      // code block
     ND_CALL_FUNC,  // call function
+    ND_ADDR,       // & (address operator)
+    ND_DEREF,      //  * (dereference operator)
 } NodeKind;
 
 typedef struct NodeReferenceVector NodeReferenceVector;
@@ -58,22 +60,24 @@ struct FunctionTable
 {
     char *name;
     int length;
-    LVar* arguments;
+    LVar *arguments;
 };
 
 typedef struct FunctionTableLinkedList FunctionTableLinkedList;
 
-struct FunctionTableLinkedList {
+struct FunctionTableLinkedList
+{
     FunctionTableLinkedList *next;
     FunctionTable *value;
 };
 
-struct Function {
-    char* name;
+struct Function
+{
+    char *name;
     int length;
-    LVar* arguments;
-    LVar* local_variables;
-    NodeReferenceVector* statements;
+    LVar *arguments;
+    LVar *local_variables;
+    NodeReferenceVector *statements;
 };
 
 struct Node
@@ -89,7 +93,7 @@ struct Node
     int val;                         // used if kind == ND_NUM
     int offset;                      // stack offset for variable(ND_LVAR)
     NodeReferenceVector *statements; // used if block code (ND_BLOCK)
-    FunctionTable *function_table;             // used if ND_CALL_FUNC
+    FunctionTable *function_table;   // used if ND_CALL_FUNC
 };
 
 struct NodeReferenceVector
@@ -127,14 +131,14 @@ bool at_eof();
     relational = add ("<" add | "<=" add | ">" add | ">=" add)*
     add        = mul ("+" mul | "-" mul)*
     mul        = unary ("*" unary | "/" unary)*
-    unary      = ("+" | "-")? term
+    unary      = "+"? term | "-"? term | "*" unary | "&" unary
     term       = num 
                | ident ("(" expr,* ")")?
                | "(" expr ")"
 */
 
 void program();
-Function* function();
+Function *function();
 Node *stmt();
 Node *assign();
 Node *expr();
@@ -164,7 +168,7 @@ Node *get(NodeReferenceVector *vector, int index);
  */
 extern Token *token; // current token
 extern char *user_input;
-extern Function* functions[100];
+extern Function *functions[100];
 extern LVar *locals;
 extern FunctionTableLinkedList *function_table;
 extern int current_node_id;

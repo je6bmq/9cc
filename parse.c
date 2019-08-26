@@ -197,6 +197,12 @@ void tokenize()
             continue;
         }
 
+        if (memcmp(p, "&", 1) == 0)
+        {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
         if (isdigit(*p))
         {
             cur = new_token(TK_NUM, cur, p, 1);
@@ -576,6 +582,14 @@ Node *mul()
 
 Node *unary()
 {
+    if (consume("*"))
+    {
+        return new_node(ND_DEREF, unary(), NULL);
+    }
+    if (consume("&"))
+    {
+        return new_node(ND_ADDR, unary(), NULL);
+    }
     if (consume("+"))
     {
         return term();

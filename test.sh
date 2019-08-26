@@ -57,4 +57,6 @@ try 16 'foo(x,y,z) {return x+y+z;} main(){hoge = 0; a=3; b=5; hoge=foo(a,b, foo(
 try 27 'foo(x,y,z) {return x+y+z;} hoge(x,y){return x*y;}main(){return foo(hoge(2,3),hoge(4,5),1);}'
 try 8 'fib(n) {if(n <= 1) {return 1;} else {return fib(n-1)+fib(n-2);}} main(){return fib(5);}'
 try 8 'fib(n,a,b) {if(n == 0) {return a;} else {return fib(n-1,a+b,a);}} main(){return fib(5,1,0);}'
+try 3 'main() {x = 3; y = 5; z = &y + 16; return *z;}'
+try 3 'main() {x = 3; y = 5; return *(&y+16);}'
 echo "OK"
