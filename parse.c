@@ -8,7 +8,6 @@
 
 Token *token; // current token
 char *user_input;
-Node *code[100];
 Function *functions[100];
 LVar *locals;
 FunctionTableLinkedList *function_table;

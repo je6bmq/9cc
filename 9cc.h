@@ -164,7 +164,6 @@ Node *get(NodeReferenceVector *vector, int index);
  */
 extern Token *token; // current token
 extern char *user_input;
-extern Node *code[100];
 extern Function* functions[100];
 extern LVar *locals;
 extern FunctionTableLinkedList *function_table;
