@@ -96,6 +96,7 @@ struct Node
     int offset;                      // stack offset for variable(ND_LVAR)
     NodeReferenceVector *statements; // used if block code (ND_BLOCK)
     FunctionTable *function_table;   // used if ND_CALL_FUNC
+    Type* type;
 };
 
 struct NodeReferenceVector

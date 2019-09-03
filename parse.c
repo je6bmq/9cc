@@ -54,16 +54,20 @@ bool consume(char *op)
 
 Token *consume_ident()
 {
-    if (token->kind != TK_IDENT || token->str[0] < 'a' || token->str[0] > 'z')
+    if (token->kind != TK_IDENT)
     {
         return NULL;
     }
-    else
+    for (int i = 0; i < token->len; i++)
     {
-        Token *tok = token;  // copy of current token
-        token = token->next; // step token to continuing process
-        return tok;
+        char c = token->str[i];
+        if(!is_alnum(c)) {
+            return NULL;
+        }
     }
+    Token *tok = token;  // copy of current token
+    token = token->next; // step token to continuing process
+    return tok;
 }
 Token *expect_ident()
 {
@@ -230,10 +234,10 @@ void tokenize()
             continue;
         }
 
-        if ('a' <= *p && *p <= 'z')
+        if (is_alnum(*p))
         {
             int name_count = 0;
-            while ('a' <= *(p + name_count) && *(p + name_count) <= 'z')
+            while (is_alnum(*(p + name_count)))
             {
                 name_count++;
             }
@@ -340,7 +344,7 @@ Function *function()
             {
                 current_offset = var->offset;
             }
-            arg->offset = current_offset +  4 * (type->to_type ? 8 : 4);
+            arg->offset = current_offset + 4 * (type->to_type ? 8 : 4);
 
             if (arguments == NULL)
             {
@@ -519,7 +523,7 @@ Node *stmt()
         }
         lvar_next->name = tok->str;
         lvar_next->len = tok->len;
-        lvar_next->offset = (lvar ? lvar->offset : 0) +  4* (type->to_type ? 8 : 4);
+        lvar_next->offset = (lvar ? lvar->offset : 0) + 4 * (type->to_type ? 8 : 4);
         lvar_next->type = type;
 
         if (lvar)
@@ -803,6 +807,7 @@ Node *term()
             {
                 // found
                 node->offset = lvar->offset;
+                node->type = lvar->type;
             }
             else
             {
