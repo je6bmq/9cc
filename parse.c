@@ -315,6 +315,17 @@ Function *function()
         while (true)
         {
             expect("int");
+            Type *type = (Type *)calloc(1, sizeof(Type));
+            type->kind = INT;
+            type->to_type = NULL;
+
+            while (consume("*"))
+            {
+                Type *tmp_type = type;
+                type = (Type *)calloc(1, sizeof(Type));
+                type->kind = POINTER;
+                type->to_type = tmp_type;
+            }
             LVar *arg = (LVar *)calloc(1, sizeof(LVar));
             if (token->kind != TK_IDENT)
             {
@@ -322,13 +333,14 @@ Function *function()
             }
             arg->name = token->str;
             arg->len = token->len;
+            arg->type = type;
 
             int current_offset = 0;
             for (LVar *var = arguments; var; var = var->next)
             {
                 current_offset = var->offset;
             }
-            arg->offset = current_offset + 0x10;
+            arg->offset = current_offset + (type->to_type ? 0x20 : 0x10);
 
             if (arguments == NULL)
             {
@@ -487,13 +499,14 @@ Node *stmt()
     }
     else if (consume("int"))
     {
-        Type *type = (Type*)calloc(1,sizeof(Type));
+        Type *type = (Type *)calloc(1, sizeof(Type));
         type->kind = INT;
         type->to_type = NULL;
 
-        while(consume("*")) {
+        while (consume("*"))
+        {
             Type *tmp_type = type;
-            type = (Type*)calloc(1,sizeof(Type));
+            type = (Type *)calloc(1, sizeof(Type));
             type->kind = POINTER;
             type->to_type = tmp_type;
         }
@@ -506,7 +519,7 @@ Node *stmt()
         }
         lvar_next->name = tok->str;
         lvar_next->len = tok->len;
-        lvar_next->offset = (lvar ? lvar->offset : 0) + 0x10;
+        lvar_next->offset = (lvar ? lvar->offset : 0) + (type->to_type ? 0x20 : 0x10);
         lvar_next->type = type;
 
         if (lvar)
@@ -524,7 +537,7 @@ Node *stmt()
                 locals = lvar_next;
             }
         }
-        node = new_node(ND_DECL, NULL,NULL);
+        node = new_node(ND_DECL, NULL, NULL);
     }
     else
     {
