@@ -56,6 +56,7 @@ typedef struct Node Node;
 typedef struct FunctionTable FunctionTable;
 typedef struct Function Function;
 typedef struct LVar LVar;
+typedef struct Type Type;
 
 struct FunctionTable
 {
@@ -105,12 +106,18 @@ struct NodeReferenceVector
     int element_size;
 };
 
+struct Type {
+    enum {INT, POINTER} kind;
+    struct Type *to_type;
+};
+
 struct LVar
 { // local variable list presented by linked list
     LVar *next;
     char *name;
     int len;
     int offset;
+    Type *type;
 };
 
 void error_at(char *loc, char *fmt, ...);
@@ -128,7 +135,8 @@ bool at_eof();
             | "{" stmt* "}"
             | "return" expr ";"
             | "int" ident ";"
-    expr       = equality
+    expr       = assign
+    assign     = equality ("=" assign)?
     equality   = relational ("==" relational | "!=" relational)*
     relational = add ("<" add | "<=" add | ">" add | ">=" add)*
     add        = mul ("+" mul | "-" mul)*

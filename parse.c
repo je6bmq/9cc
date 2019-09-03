@@ -487,6 +487,16 @@ Node *stmt()
     }
     else if (consume("int"))
     {
+        Type *type = (Type*)calloc(1,sizeof(Type));
+        type->kind = INT;
+        type->to_type = NULL;
+
+        while(consume("*")) {
+            Type *tmp_type = type;
+            type = (Type*)calloc(1,sizeof(Type));
+            type->kind = POINTER;
+            type->to_type = tmp_type;
+        }
         Token *tok = expect_ident();
         LVar *lvar = (LVar *)calloc(1, sizeof(LVar));
         LVar *lvar_next = (LVar *)calloc(1, sizeof(LVar));
@@ -497,7 +507,7 @@ Node *stmt()
         lvar_next->name = tok->str;
         lvar_next->len = tok->len;
         lvar_next->offset = (lvar ? lvar->offset : 0) + 0x10;
-        // node->offset = lvar_next->offset;
+        lvar_next->type = type;
 
         if (lvar)
         {

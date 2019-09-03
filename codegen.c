@@ -39,7 +39,16 @@ void gen(Node *node)
         printf("    push rax\n");
         return;
     case ND_ASSIGN:
-        gen_lval(node->lhs);
+        if(node->lhs->kind == ND_DEREF) {
+            Node *lhs = node->lhs;
+            while(lhs->kind == ND_DEREF) {
+                gen(node->lhs->lhs);
+                lhs = lhs->lhs;
+            }
+            printf("    pop rax\n");
+        } else {
+            gen_lval(node->lhs);
+        }
         gen(node->rhs);
 
         printf("    pop rdi\n");

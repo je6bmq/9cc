@@ -59,4 +59,6 @@ try 8 'int fib(int n) {if(n <= 1) {return 1;} else {return fib(n-1)+fib(n-2);}} 
 try 8 'int fib(int n,int a,int b) {if(n == 0) {return a;} else {return fib(n-1,a+b,a);}} int main(){return fib(5,1,0);}'
 try 3 'int main() {int x; x = 3; int y; y = 5; int z; z = &y + 16; return *z;}'
 try 3 'int main() {int x; x = 3; int y; y = 5; return *(&y+16);}'
+try 3 'int main() {int x; int* y; x=0; y=&x; *y = 3; return x;}'
+try 3 'int main() {int x; int* y; int** z; x = 0; y = &x; z = &y; **z = 3; return x;}'
 echo "OK"
