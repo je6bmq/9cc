@@ -39,14 +39,18 @@ void gen(Node *node)
         printf("    push rax\n");
         return;
     case ND_ASSIGN:
-        if(node->lhs->kind == ND_DEREF) {
+        if (node->lhs->kind == ND_DEREF)
+        {
             Node *lhs = node->lhs;
-            while(lhs->kind == ND_DEREF) {
+            while (lhs->kind == ND_DEREF)
+            {
                 gen(node->lhs->lhs);
                 lhs = lhs->lhs;
             }
             printf("    pop rax\n");
-        } else {
+        }
+        else
+        {
             gen_lval(node->lhs);
         }
         gen(node->rhs);
@@ -169,6 +173,21 @@ void gen(Node *node)
 
     printf("    pop rdi\n");
     printf("    pop rax\n");
+
+    if (node->lhs->type != NULL && (node->kind == ND_ADD || node->kind == ND_SUB))
+    {
+        if (node->lhs->type->kind == POINTER)
+        {
+            if (node->lhs->type->to_type->kind == POINTER)
+            {
+                printf("    imul rdi, %d\n", 4 * 8);
+            }
+            else if (node->lhs->type->to_type->kind == INT)
+            {
+                printf("    imul rdi, %d\n", 4 * 4);
+            }
+        }
+    }
 
     switch (node->kind)
     {
