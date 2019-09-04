@@ -61,7 +61,8 @@ Token *consume_ident()
     for (int i = 0; i < token->len; i++)
     {
         char c = token->str[i];
-        if(!is_alnum(c)) {
+        if (!is_alnum(c))
+        {
             return NULL;
         }
     }
@@ -693,7 +694,7 @@ Node *term()
     Token *tok = consume_ident();
     if (tok)
     {
-        Node *node = calloc(1, sizeof(Node));
+        Node *node = (Node *)calloc(1, sizeof(Node));
 
         if (consume("("))
         {
@@ -731,12 +732,14 @@ Node *term()
             node->function_table = func;
 
             int arg_index = 0;
+
             if (!consume(")"))
             {
                 while (true)
                 {
-                    *arguments[arg_index++] = expr();
-                    if (arg_index >= 6)
+                    *(arguments[arg_index++]) = expr();
+
+                    if (arg_index > 6)
                     {
                         error_at(token->str, "引数が多すぎます．");
                     }
@@ -768,32 +771,33 @@ Node *term()
             else
             {
                 // un-declared or in other file function
-                LVar *arguments;
+                LVar *argument_vars;
                 char *tmp_arg_names[6] = {"a", "b", "c", "d", "e", "f"};
-                if (arg_index == 1)
+                if (arg_index == 0)
                 {
-                    arguments = NULL;
+                    argument_vars = NULL;
                 }
                 else
                 {
-                    arguments = (LVar *)calloc(1, sizeof(LVar));
-                    arguments->len = 1;
-                    arguments->name = tmp_arg_names[6 - arg_index];
+                    argument_vars = (LVar *)calloc(1, sizeof(LVar));
+                    argument_vars->len = 1;
                     arg_index--;
-                    LVar *args = arguments;
-                    for (int i = arg_index; i > 0; i--)
+                    argument_vars->name = tmp_arg_names[arg_index];
+                    LVar *args = argument_vars;
+                    for (int i = arg_index; i >= 0; i--)
                     {
                         LVar *arg = (LVar *)calloc(1, sizeof(LVar));
                         arg->len = 1;
-                        arg->name = tmp_arg_names[6 - arg_index];
+                        arg->name = tmp_arg_names[i];
                         args->next = arg;
                         args = arg;
                     }
+                    argument_vars = args;
                 }
-                func->arguments = arguments;
+                func->arguments = argument_vars;
             }
 
-            for (int i = arg_index; i < 6; i++)
+            for (int i = arg_index+1; i < 6; i++)
             {
                 free(*arguments[i]);
                 *arguments[i] = NULL;
@@ -814,7 +818,6 @@ Node *term()
                 error_at(token->str, "未定義の変数を使用しています．\n");
             }
         }
-
         return node;
     }
 
