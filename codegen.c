@@ -140,7 +140,7 @@ void gen(Node *node)
     case ND_CALL_FUNC:
     {
         Node **arguments[6] = {&(node->lhs), &(node->rhs), &(node->other), &(node->another), &(node->option1), &(node->option2)};
-        char *registers[6] = {"rdi", "rsi", "rdx", "rcx", "c8", "r9"};
+        char *registers[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
         int num_arg = 0;
 
         for (int i = 0; *(arguments[i]) != NULL; i++)
