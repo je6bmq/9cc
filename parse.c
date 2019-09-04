@@ -27,6 +27,19 @@ void error_at(char *loc, char *fmt, ...)
     exit(1);
 }
 
+void warn_at(char *loc, char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    int pos = loc - user_input;
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", pos, "");
+    fprintf(stderr, "^ ");
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+}
+
 /*
     error function like fprintf
  */
@@ -630,7 +643,9 @@ Node *add()
         {
             type->kind = node->type->kind;
             type->to_type = node->type->to_type;
-        } else {
+        }
+        else
+        {
             type = NULL;
         }
 
@@ -657,13 +672,33 @@ Node *mul()
 
     for (;;)
     {
+        Type *type = (Type *)calloc(1, sizeof(Type));
+        if (node->type != NULL)
+        {
+            type->kind = node->type->kind;
+            type->to_type = node->type->to_type;
+        }
+        else
+        {
+            type = NULL;
+        }
         if (consume("*"))
         {
             node = new_node(ND_MUL, node, unary());
+            node->type = type;
+            if (node->type != NULL && node->type->kind == POINTER)
+            {
+                warn_at(token->str, "ポインタ型に対する乗算，除算は危険です．");
+            }
         }
         else if (consume("/"))
         {
             node = new_node(ND_DIV, node, unary());
+            node->type = type;
+            if (node->type != NULL && node->type->kind == POINTER)
+            {
+                warn_at(token->str, "ポインタ型に対する乗算，除算は危険です．");
+            }
         }
         else
         {

@@ -122,6 +122,7 @@ struct LVar
 };
 
 void error_at(char *loc, char *fmt, ...);
+void warn_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
 bool consume(char *op);
 void expect(char *op);
