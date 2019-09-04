@@ -625,13 +625,24 @@ Node *add()
 
     for (;;)
     {
+        Type *type = (Type *)calloc(1, sizeof(Type));
+        if (node->type != NULL && node->type->kind == POINTER)
+        {
+            type->kind = node->type->kind;
+            type->to_type = node->type->to_type;
+        } else {
+            type = NULL;
+        }
+
         if (consume("+"))
         {
             node = new_node(ND_ADD, node, mul());
+            node->type = type;
         }
         else if (consume("-"))
         {
             node = new_node(ND_SUB, node, mul());
+            node->type = type;
         }
         else
         {
@@ -797,7 +808,7 @@ Node *term()
                 func->arguments = argument_vars;
             }
 
-            for (int i = arg_index+1; i < 6; i++)
+            for (int i = arg_index + 1; i < 6; i++)
             {
                 free(*arguments[i]);
                 *arguments[i] = NULL;
