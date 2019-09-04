@@ -234,7 +234,7 @@ void tokenize()
             continue;
         }
 
-        if (memcmp(p, "int", 3) == 0)
+        if (memcmp(p, "int", 3) == 0 && (!is_alnum(p[3]) || p[3] == '*'))
         {
             cur = new_token(TK_RESERVED, cur, p, 3);
             p += 3;
