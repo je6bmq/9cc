@@ -827,10 +827,10 @@ Node *term()
                 {
                     argument_vars = (LVar *)calloc(1, sizeof(LVar));
                     argument_vars->len = 1;
-                    arg_index--;
-                    argument_vars->name = tmp_arg_names[arg_index];
+
+                    argument_vars->name = tmp_arg_names[arg_index-1];
                     LVar *args = argument_vars;
-                    for (int i = arg_index; i >= 0; i--)
+                    for (int i = arg_index-1; i >= 0; i--)
                     {
                         LVar *arg = (LVar *)calloc(1, sizeof(LVar));
                         arg->len = 1;
@@ -843,7 +843,7 @@ Node *term()
                 func->arguments = argument_vars;
             }
 
-            for (int i = arg_index + 1; i < 6; i++)
+            for (int i = arg_index; i < 6; i++)
             {
                 free(*arguments[i]);
                 *arguments[i] = NULL;
