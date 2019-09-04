@@ -142,11 +142,11 @@ void gen(Node *node)
         Node **arguments[6] = {&(node->lhs), &(node->rhs), &(node->other), &(node->another), &(node->option1), &(node->option2)};
         char *registers[6] = {"rdi", "rsi", "rdx", "rcx", "c8", "r9"};
         int num_arg = 0;
-        for (int i = 0; *arguments[i] != NULL; i++)
+
+        for (int i = 0; *(arguments[i]) != NULL; i++)
         {
-            gen(*arguments[i]);
+            gen(*(arguments[i]));
             printf("    pop rax\n");
-            // printf("    mov %s, rax\n", registers[i]);
             printf("    push rax\n");
             num_arg++;
         }
@@ -180,11 +180,11 @@ void gen(Node *node)
         {
             if (node->lhs->type->to_type->kind == POINTER)
             {
-                printf("    imul rdi, %d\n", 4 * 8);
+                printf("    imul rdi, %d\n", 8);
             }
             else if (node->lhs->type->to_type->kind == INT)
             {
-                printf("    imul rdi, %d\n", 4 * 4);
+                printf("    imul rdi, %d\n", 4);
             }
         }
     }
