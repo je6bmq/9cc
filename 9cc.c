@@ -49,7 +49,7 @@ int main(int argc, char **argv)
         }
     }
     printf("\n\n");
-    char *registers[6] = {"rdi", "rsi", "rdx", "rcx", "c8", "r9"};
+    char *registers[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
     for (int i = 0; functions[i]; i++)
     {
