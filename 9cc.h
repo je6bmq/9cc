@@ -13,6 +13,7 @@ typedef enum
     TK_ELSE,     // else statement
     TK_WHILE,    // while statement
     TK_FOR,      // while statement
+    TK_SIZEOF,   // sizeof operator
 } TokenKind;
 
 typedef struct Token Token;
@@ -96,7 +97,7 @@ struct Node
     int offset;                      // stack offset for variable(ND_LVAR)
     NodeReferenceVector *statements; // used if block code (ND_BLOCK)
     FunctionTable *function_table;   // used if ND_CALL_FUNC
-    Type* type;
+    Type *type;
 };
 
 struct NodeReferenceVector
@@ -107,8 +108,13 @@ struct NodeReferenceVector
     int element_size;
 };
 
-struct Type {
-    enum {INT, POINTER} kind;
+struct Type
+{
+    enum
+    {
+        INT,
+        POINTER
+    } kind;
     struct Type *to_type;
 };
 
@@ -143,7 +149,7 @@ bool at_eof();
     relational = add ("<" add | "<=" add | ">" add | ">=" add)*
     add        = mul ("+" mul | "-" mul)*
     mul        = unary ("*" unary | "/" unary)*
-    unary      = "+"? term | "-"? term | "*" unary | "&" unary
+    unary      = "+"? term | "-"? term | "*" unary | "&" unary | "sizeof" unary
     term       = num 
                | ident ("(" expr,* ")")?
                | "(" expr ")"
@@ -164,8 +170,8 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
-Token* consume_ident();
-Token* expect_ident();
+Token *consume_ident();
+Token *expect_ident();
 LVar *find_lvar(Token *tok);
 FunctionTable *find_function(Token *tok);
 void tokenize();

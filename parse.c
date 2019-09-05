@@ -57,7 +57,7 @@ void error(char *fmt, ...)
  */
 bool consume(char *op)
 {
-    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN && token->kind != TK_IF && token->kind != TK_ELSE && token->kind != TK_FOR && token->kind != TK_WHILE) || strlen(op) != token->len || memcmp(token->str, op, token->len))
+    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN && token->kind != TK_IF && token->kind != TK_ELSE && token->kind != TK_FOR && token->kind != TK_WHILE && token->kind != TK_SIZEOF) || strlen(op) != token->len || memcmp(token->str, op, token->len))
     {
         return false;
     }
@@ -241,6 +241,13 @@ void tokenize()
             continue;
         }
 
+        if (memcmp(p, "sizeof", 6) == 0 && !is_alnum(p[6]))
+        {
+            cur = new_token(TK_SIZEOF, cur, p, 6);
+            p += 6;
+            continue;
+        }
+
         if (isdigit(*p))
         {
             cur = new_token(TK_NUM, cur, p, 1);
@@ -284,6 +291,9 @@ Node *new_node_num(int val)
     node->id = current_node_id++;
     node->kind = ND_NUM;
     node->val = val;
+    node->type = (Type*)calloc(1,sizeof(Type));
+    node->type->kind = INT;
+    node->type->to_type = NULL;
     return node;
 }
 
@@ -639,7 +649,7 @@ Node *add()
     for (;;)
     {
         Type *type = (Type *)calloc(1, sizeof(Type));
-        if (node->type != NULL && node->type->kind == POINTER)
+        if (node->type != NULL)
         {
             type->kind = node->type->kind;
             type->to_type = node->type->to_type;
@@ -711,11 +721,21 @@ Node *unary()
 {
     if (consume("*"))
     {
-        return new_node(ND_DEREF, unary(), NULL);
+        Node *lhs = unary();
+        Node *node = new_node(ND_DEREF, lhs, NULL);
+        node->type = lhs->type->to_type;
+        return node;
     }
     if (consume("&"))
     {
-        return new_node(ND_ADDR, unary(), NULL);
+        Node *lhs = unary();
+        Type *type = (Type *)calloc(1, sizeof(Type));
+        type->kind = POINTER;
+        type->to_type = lhs->type;
+
+        Node *node = new_node(ND_ADDR, lhs, NULL);
+        node->type = type;
+        return node;
     }
     if (consume("+"))
     {
@@ -725,6 +745,29 @@ Node *unary()
     {
         return new_node(ND_SUB, new_node_num(0), term());
     }
+    if (consume("sizeof"))
+    {
+        bool is_parentheses = consume("(");
+        Node *node = expr();
+        if (node->type == NULL)
+        {
+            error_at(token->str, "型が未定義です");
+        }
+
+        if (is_parentheses)
+        {
+            expect(")");
+        }
+        if (node->type->kind == POINTER)
+        {
+            return new_node_num(8);
+        }
+        else if (node->type->kind == INT)
+        {
+            return new_node_num(4);
+        }
+    }
+
     return term();
 }
 
@@ -828,9 +871,9 @@ Node *term()
                     argument_vars = (LVar *)calloc(1, sizeof(LVar));
                     argument_vars->len = 1;
 
-                    argument_vars->name = tmp_arg_names[arg_index-1];
+                    argument_vars->name = tmp_arg_names[arg_index - 1];
                     LVar *args = argument_vars;
-                    for (int i = arg_index-1; i >= 0; i--)
+                    for (int i = arg_index - 1; i >= 0; i--)
                     {
                         LVar *arg = (LVar *)calloc(1, sizeof(LVar));
                         arg->len = 1;
@@ -866,8 +909,8 @@ Node *term()
         }
         return node;
     }
-
-    return new_node_num(expect_number());
+    Node *node = new_node_num(expect_number());
+    return node;
 }
 
 FunctionTable *find_function(Token *tok)
