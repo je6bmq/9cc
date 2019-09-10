@@ -764,6 +764,9 @@ Node *unary()
     {
         Node *lhs = unary();
         Node *node = new_node(ND_DEREF, lhs, NULL);
+        if(lhs->type->to_type == NULL) {
+            error_at(token->str, "参照外し可能な変数ではありません．");
+        }
         node->type = lhs->type->to_type;
         return node;
     }
@@ -942,6 +945,25 @@ Node *term()
                 // found
                 node->offset = lvar->offset;
                 node->type = lvar->type;
+                if (consume("["))
+                { // array indexing
+                    Node *index = expr();
+                    Node *array = node;
+                    Node *indexed_pointer = new_node(ND_ADD, array, index);
+                    indexed_pointer->type = array->type;
+                    node = new_node(ND_DEREF, indexed_pointer,NULL);
+                    if(indexed_pointer->type->to_type == NULL || (array->type->kind != ARRAY && array->type->kind != POINTER)) {
+                        error_at(token->str, "添字アクセスをサポートしていません．");
+                    }
+                    if(index->kind == ND_NUM) {
+                        int i = index->val;
+                        if(i >= array->type->array_size) {
+                            warn_at(token->str, "配列外参照の可能性があります．");
+                        }
+                    }
+                    node->type = indexed_pointer->type->to_type;
+                    expect("]");
+                }
             }
             else
             {

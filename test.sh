@@ -70,4 +70,6 @@ try 8 'int main() {int *x; int y; y = 3; x = &y ; return sizeof(x+5);}'
 try 4 'int main() {int *x; return sizeof(sizeof(x));}'
 try 3 'int main() {int a[2]; *a=1; *(a+1) = 2; int *p; p = a; return *p + *(p+1);}'
 try 6 'int main() {int a[3]; *a=1; *(a+1) = 2; *(a+2) = 3; int *p; p = a; return *p + *(p+1) + *(p+2);}'
+try 3 'int main() {int a[2]; a[0]=1; a[1] = 2;  return a[0] + a[1];}'
+try 8 'int main() {int a[3]; a[0]=1; a[1] = 2; a[2] = 3; int *p; p = a; p[0] = p[2]; return a[0] + a[1] + a[2];}'
 echo "OK"
