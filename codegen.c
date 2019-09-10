@@ -17,7 +17,6 @@ void gen_lval(Node *node)
 
 void gen(Node *node)
 {
-    // printf("    xor rax, rax\n");
     if (node->kind == ND_RETURN)
     {
         gen(node->lhs);

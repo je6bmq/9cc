@@ -20,23 +20,8 @@ int main(int argc, char **argv)
     program();
 
     printf(".intel_syntax noprefix\n");
-    // printf(".global main\n");
-    // printf("main:\n");
-
-    // printf("    push rbp\n");
-    // printf("    mov rbp, rsp\n");
-    // printf("    sub rsp, %d\n", locals ? locals->offset : 0); // alphabet 26 chars * 8 bytes
-
-    // for (int i = 0; code[i]; i++)
-    // {
-    //     gen(code[i]);
-    //     if (code[i]->kind != ND_RETURN)
-    //     {
-    //         printf("    pop rax\n");
-    //     }
-    // }
-
     printf(".global ");
+
     for (int i = 0; functions[i]; i++)
     {
         for (int j = 0; j < functions[i]->length; j++)
@@ -93,8 +78,5 @@ int main(int argc, char **argv)
         }
     }
 
-    // printf("    mov rsp, rbp\n");
-    // printf("    pop rbp\n");
-    // printf("    ret\n");
     return 0;
 }
