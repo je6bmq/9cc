@@ -59,6 +59,8 @@ try 8 'int fib(int n) {if(n <= 1) {return 1;} else {return fib(n-1)+fib(n-2);}} 
 try 8 'int fib(int n,int a,int b) {if(n == 0) {return a;} else {return fib(n-1,a+b,a);}} int main(){return fib(5,1,0);}'
 try 3 'int main() {int x; int* y; x=0; y=&x; *y = 3; return x;}'
 try 3 'int main() {int x; int* y; int** z; x = 0; y = &x; z = &y; **z = 3; return x;}'
+try 3 'int main() {int x; int y; x = 5; y = 7; *(&x - 1)=3; return y;}'
+try 7 'int main() {int x; int y; x = 5; y = 7; *&x=3; return y;}'
 try 4 'int main() {int x; return sizeof(x);}'
 try 8 'int main() {int *x; return sizeof(x);}'
 try 4 'int main() {int *x; int y; y = 3; x = &y ; return sizeof(*x);}'

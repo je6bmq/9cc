@@ -17,6 +17,7 @@ void gen_lval(Node *node)
 
 void gen(Node *node)
 {
+    // printf("    xor rax, rax\n");
     if (node->kind == ND_RETURN)
     {
         gen(node->lhs);
@@ -35,7 +36,15 @@ void gen(Node *node)
     case ND_LVAR:
         gen_lval(node);
         printf("    pop rax\n");
-        printf("    mov rax, [rax]\n");
+        if (node->type->kind == POINTER)
+        {
+            printf("    mov rax, QWORD PTR [rax]\n");
+        }
+        else if (node->type->kind == INT)
+        {
+            printf("    mov eax, DWORD PTR [rax]\n");
+        }
+
         printf("    push rax\n");
         return;
     case ND_ASSIGN:
@@ -47,7 +56,6 @@ void gen(Node *node)
                 gen(node->lhs->lhs);
                 lhs = lhs->lhs;
             }
-            printf("    pop rax\n");
         }
         else
         {
@@ -57,7 +65,16 @@ void gen(Node *node)
 
         printf("    pop rdi\n");
         printf("    pop rax\n");
-        printf("    mov [rax], rdi\n");
+
+        if (node->lhs->type->kind == POINTER)
+        {
+            printf("    mov QWORD PTR [rax], rdi\n");
+        }
+        else if (node->lhs->type->kind == INT)
+        {
+            printf("    mov DWORD PTR [rax], edi\n");
+        }
+
         printf("    push rdi\n");
         return;
     case ND_ADDR:
@@ -66,7 +83,7 @@ void gen(Node *node)
     case ND_DEREF:
         gen(node->lhs);
         printf("    pop rax\n");
-        printf("    mov rax, [rax]\n");
+        printf("    mov rax, QWORD PTR [rax]\n");
         printf("    push rax\n");
         return;
     case ND_IF:

@@ -368,7 +368,7 @@ Function *function()
             {
                 current_offset = var->offset;
             }
-            arg->offset = current_offset + 4 * (type->to_type ? 8 : 4);
+            arg->offset = current_offset +  (type->to_type ? 8 : 4);
 
             if (arguments == NULL)
             {
@@ -547,7 +547,7 @@ Node *stmt()
         }
         lvar_next->name = tok->str;
         lvar_next->len = tok->len;
-        lvar_next->offset = (lvar ? lvar->offset : 0) + 4 * (type->to_type ? 8 : 4);
+        lvar_next->offset = (lvar ? lvar->offset : 0) + (type->to_type ? 8 : 4);
         lvar_next->type = type;
 
         if (lvar)

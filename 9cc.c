@@ -49,7 +49,7 @@ int main(int argc, char **argv)
         }
     }
     printf("\n\n");
-    char *registers[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+    char *registers[6] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 
     for (int i = 0; functions[i]; i++)
     {
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
             printf("    mov rax, rbp\n");
             printf("    sub rax, %d\n", var->offset);
-            printf("    mov [rax], %s\n", registers[arg_index++]);
+            printf("    mov DWORD PTR [rax], %s\n", registers[arg_index++]);
         }
 
         for (int j = 0; j < functions[i]->statements->size; j++)
