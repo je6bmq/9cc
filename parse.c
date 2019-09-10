@@ -210,7 +210,7 @@ void tokenize()
             continue;
         }
 
-        if (memcmp(p, ";", 1) == 0 || memcmp(p, "(", 1) == 0 || memcmp(p, ")", 1) == 0 || memcmp(p, "{", 1) == 0 || memcmp(p, "}", 1) == 0 || memcmp(p, ",", 1) == 0)
+        if (memcmp(p, ";", 1) == 0 || memcmp(p, "(", 1) == 0 || memcmp(p, ")", 1) == 0 || memcmp(p, "{", 1) == 0 || memcmp(p, "}", 1) == 0 || memcmp(p, ",", 1) == 0 || memcmp(p, "[", 1) == 0 || memcmp(p, "]", 1) == 0)
         {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
@@ -291,10 +291,39 @@ Node *new_node_num(int val)
     node->id = current_node_id++;
     node->kind = ND_NUM;
     node->val = val;
-    node->type = (Type*)calloc(1,sizeof(Type));
+    node->type = (Type *)calloc(1, sizeof(Type));
     node->type->kind = INT;
     node->type->to_type = NULL;
     return node;
+}
+
+int desired_stack_size(Type *type)
+{
+    if (type == NULL)
+    {
+        error_at(token->str, "型情報がありません．");
+    }
+    switch (type->kind)
+    {
+    case INT:
+        return 4;
+    case POINTER:
+        return 8;
+    case ARRAY:
+    {
+        int size = type->array_size;
+        Type *value_type = type->to_type;
+        if (size <= 0)
+        {
+            error_at(token->str, "配列の要素数は正の数である必要があります．");
+        }
+        else if (value_type == NULL)
+        {
+            error_at(token->str, "要素の型情報がありません．");
+        }
+        return size * desired_stack_size(value_type);
+    }
+    }
 }
 
 Function *function()
@@ -368,7 +397,7 @@ Function *function()
             {
                 current_offset = var->offset;
             }
-            arg->offset = current_offset +  (type->to_type ? 8 : 4);
+            arg->offset = current_offset + desired_stack_size(type);
 
             if (arguments == NULL)
             {
@@ -537,8 +566,20 @@ Node *stmt()
             type = (Type *)calloc(1, sizeof(Type));
             type->kind = POINTER;
             type->to_type = tmp_type;
+            type->array_size = 0;
         }
+
         Token *tok = expect_ident();
+        if (consume("["))
+        {
+            Type *tmp_type = type;
+            type = (Type *)calloc(1, sizeof(Type));
+            type->to_type = tmp_type;
+            type->kind = ARRAY;
+            type->array_size = expect_number();
+            expect("]");
+        }
+
         LVar *lvar = (LVar *)calloc(1, sizeof(LVar));
         LVar *lvar_next = (LVar *)calloc(1, sizeof(LVar));
         for (LVar *var = locals; var; var = var->next)
@@ -547,7 +588,7 @@ Node *stmt()
         }
         lvar_next->name = tok->str;
         lvar_next->len = tok->len;
-        lvar_next->offset = (lvar ? lvar->offset : 0) + (type->to_type ? 8 : 4);
+        lvar_next->offset = (lvar ? lvar->offset : 0) + desired_stack_size(type);
         lvar_next->type = type;
 
         if (lvar)

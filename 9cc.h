@@ -113,9 +113,11 @@ struct Type
     enum
     {
         INT,
-        POINTER
+        POINTER,
+        ARRAY,
     } kind;
     struct Type *to_type;
+    int array_size;
 };
 
 struct LVar
@@ -155,6 +157,7 @@ bool at_eof();
                | "(" expr ")"
 */
 
+int desired_stack_size(Type* type);
 void program();
 Function *function();
 Node *stmt();

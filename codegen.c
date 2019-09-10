@@ -192,7 +192,7 @@ void gen(Node *node)
 
     if (node->lhs->type != NULL && (node->kind == ND_ADD || node->kind == ND_SUB))
     {
-        if (node->lhs->type->kind == POINTER)
+        if (node->lhs->type->kind == POINTER || node->lhs->type->kind == ARRAY)
         {
             if (node->lhs->type->to_type->kind == POINTER)
             {
