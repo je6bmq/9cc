@@ -523,19 +523,6 @@ void program()
             }
             tmp_token = tmp_token->next;
             is_global_variable = memcmp(tmp_token->str,"(",1) != 0;
-            // if (memcmp(tmp_token->str, "[", 1) == 0)
-            // {
-            //     tmp_token = tmp_token->next;
-            //     while(memcmp(tmp_token->str, ")", 1) != 0)
-            //     {
-            //         tmp_token = tmp_token->next;
-            //         if(tmp_token == NULL) {
-            //             error("関数の括弧が閉じられていません．");
-            //         }
-            //     }
-            //     tmp_token = tmp_token->next;
-            //     is_global_variable = memcmp(tmp_token->str, "{", 1) != 0;
-            // }
         }
 
         if (is_global_variable)
@@ -650,56 +637,6 @@ Node *stmt()
     }
     else if (consume("int"))
     {
-        // Type *type = (Type *)calloc(1, sizeof(Type));
-        // type->kind = INT;
-        // type->to_type = NULL;
-
-        // while (consume("*"))
-        // {
-        //     Type *tmp_type = type;
-        //     type = (Type *)calloc(1, sizeof(Type));
-        //     type->kind = POINTER;
-        //     type->to_type = tmp_type;
-        //     type->array_size = 0;
-        // }
-
-        // Token *tok = expect_ident();
-        // if (consume("["))
-        // {
-        //     Type *tmp_type = type;
-        //     type = (Type *)calloc(1, sizeof(Type));
-        //     type->to_type = tmp_type;
-        //     type->kind = ARRAY;
-        //     type->array_size = expect_number();
-        //     expect("]");
-        // }
-
-        // Variables *lvar = (Variables *)calloc(1, sizeof(Variables));
-        // Variables *lvar_next = (Variables *)calloc(1, sizeof(Variables));
-        // for (Variables *var = locals; var; var = var->next)
-        // {
-        //     lvar = var;
-        // }
-        // lvar_next->name = tok->str;
-        // lvar_next->len = tok->len;
-        // lvar_next->offset = (lvar ? lvar->offset : 0) + desired_stack_size(type);
-        // lvar_next->type = type;
-
-        // if (lvar)
-        // {
-        //     lvar->next = lvar_next;
-        // }
-        // else
-        // {
-        //     if (locals)
-        //     {
-        //         locals->next = lvar_next;
-        //     }
-        //     else
-        //     {
-        //         locals = lvar_next;
-        //     }
-        // }
         add_variables(&locals, INT);
         node = new_node(ND_DECL, NULL, NULL);
     }
