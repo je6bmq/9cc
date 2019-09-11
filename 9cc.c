@@ -4,8 +4,8 @@
 
 // Node *code[100];
 Function *functions[100];
-LVar *locals;
-LVar *globals;
+Variables *locals;
+Variables *globals;
 
 int main(int argc, char **argv)
 {
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
         }
 
         int offset = 0;
-        for (LVar *var = functions[i]->local_variables; var; var = var->next)
+        for (Variables *var = functions[i]->local_variables; var; var = var->next)
         {
             offset = var->offset;
         }
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
         printf("    sub rsp, %d\n", offset);
 
         int arg_index = 0;
-        for (LVar *var = functions[i]->arguments; var; var = var->next)
+        for (Variables *var = functions[i]->arguments; var; var = var->next)
         {
             if (arg_index > 5)
             {

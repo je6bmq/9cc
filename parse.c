@@ -9,8 +9,8 @@
 Token *token; // current token
 char *user_input;
 Function *functions[100];
-LVar *locals;
-LVar *globals;
+Variables *locals;
+Variables *globals;
 FunctionTableLinkedList *function_table;
 int current_node_id;
 
@@ -366,7 +366,7 @@ Function *function()
     func->length = token->len;
     token = token->next;
     expect("(");
-    LVar *arguments = NULL;
+    Variables *arguments = NULL;
 
     if (!consume(")"))
     {
@@ -384,7 +384,7 @@ Function *function()
                 type->kind = POINTER;
                 type->to_type = tmp_type;
             }
-            LVar *arg = (LVar *)calloc(1, sizeof(LVar));
+            Variables *arg = (Variables *)calloc(1, sizeof(Variables));
             if (token->kind != TK_IDENT)
             {
                 error_at(token->str, "引数の変数名が不正です．");
@@ -394,7 +394,7 @@ Function *function()
             arg->type = type;
 
             int current_offset = 0;
-            for (LVar *var = arguments; var; var = var->next)
+            for (Variables *var = arguments; var; var = var->next)
             {
                 current_offset = var->offset;
             }
@@ -407,8 +407,8 @@ Function *function()
             }
             else
             {
-                LVar *last_arg;
-                for (LVar *var = arguments; var; var = var->next)
+                Variables *last_arg;
+                for (Variables *var = arguments; var; var = var->next)
                 {
                     last_arg = var;
                 }
@@ -431,11 +431,11 @@ Function *function()
             }
         }
     }
-    locals = (LVar *)calloc(1, sizeof(LVar));
+    locals = (Variables *)calloc(1, sizeof(Variables));
     func_table->arguments = arguments; // "arguments" indicates pointer, so this statement has to be placed after parsing arguments.
     func->arguments = arguments;
-    LVar *arg_last = locals;
-    for (LVar *arg = arguments; arg; arg = arg->next)
+    Variables *arg_last = locals;
+    for (Variables *arg = arguments; arg; arg = arg->next)
     {
         arg_last->next = arg;
         arg_last = arg_last->next;
@@ -449,7 +449,7 @@ Function *function()
     return func;
 }
 
-void add_variables(LVar **variables_ptr, TypeKind element_kind)
+void add_variables(Variables **variables_ptr, TypeKind element_kind)
 {
     Type *type = (Type *)calloc(1, sizeof(Type));
     type->kind = element_kind;
@@ -475,9 +475,9 @@ void add_variables(LVar **variables_ptr, TypeKind element_kind)
         expect("]");
     }
 
-    LVar *lvar = (LVar *)calloc(1, sizeof(LVar));
-    LVar *lvar_next = (LVar *)calloc(1, sizeof(LVar));
-    for (LVar *var = (*variables_ptr); var; var = var->next)
+    Variables *lvar = (Variables *)calloc(1, sizeof(Variables));
+    Variables *lvar_next = (Variables *)calloc(1, sizeof(Variables));
+    for (Variables *var = (*variables_ptr); var; var = var->next)
     {
         lvar = var;
     }
@@ -674,9 +674,9 @@ Node *stmt()
         //     expect("]");
         // }
 
-        // LVar *lvar = (LVar *)calloc(1, sizeof(LVar));
-        // LVar *lvar_next = (LVar *)calloc(1, sizeof(LVar));
-        // for (LVar *var = locals; var; var = var->next)
+        // Variables *lvar = (Variables *)calloc(1, sizeof(Variables));
+        // Variables *lvar_next = (Variables *)calloc(1, sizeof(Variables));
+        // for (Variables *var = locals; var; var = var->next)
         // {
         //     lvar = var;
         // }
@@ -985,9 +985,9 @@ Node *term()
 
             if (is_declared_function)
             {
-                LVar *arguments = func->arguments;
+                Variables *arguments = func->arguments;
                 int count = 0;
-                for (LVar *arg = arguments; arg; arg = arg->next)
+                for (Variables *arg = arguments; arg; arg = arg->next)
                 {
                     count++;
                 }
@@ -1000,7 +1000,7 @@ Node *term()
             else
             {
                 // un-declared or in other file function
-                LVar *argument_vars;
+                Variables *argument_vars;
                 char *tmp_arg_names[6] = {"a", "b", "c", "d", "e", "f"};
                 if (arg_index == 0)
                 {
@@ -1008,14 +1008,14 @@ Node *term()
                 }
                 else
                 {
-                    argument_vars = (LVar *)calloc(1, sizeof(LVar));
+                    argument_vars = (Variables *)calloc(1, sizeof(Variables));
                     argument_vars->len = 1;
 
                     argument_vars->name = tmp_arg_names[arg_index - 1];
-                    LVar *args = argument_vars;
+                    Variables *args = argument_vars;
                     for (int i = arg_index - 1; i >= 0; i--)
                     {
-                        LVar *arg = (LVar *)calloc(1, sizeof(LVar));
+                        Variables *arg = (Variables *)calloc(1, sizeof(Variables));
                         arg->len = 1;
                         arg->name = tmp_arg_names[i];
                         args->next = arg;
@@ -1034,7 +1034,7 @@ Node *term()
         }
         else
         {
-            LVar *lvar = find_lvar(tok);
+            Variables *lvar = find_lvar(tok);
             node->kind = ND_LVAR;
             if (lvar)
             {
@@ -1087,9 +1087,9 @@ FunctionTable *find_function(Token *tok)
     return NULL;
 }
 
-LVar *find_lvar(Token *tok)
+Variables *find_lvar(Token *tok)
 {
-    for (LVar *var = locals; var; var = var->next)
+    for (Variables *var = locals; var; var = var->next)
     {
         if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
         {

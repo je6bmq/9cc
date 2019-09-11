@@ -56,14 +56,14 @@ typedef struct NodeReferenceVector NodeReferenceVector;
 typedef struct Node Node;
 typedef struct FunctionTable FunctionTable;
 typedef struct Function Function;
-typedef struct LVar LVar;
+typedef struct Variables Variables;
 typedef struct Type Type;
 
 struct FunctionTable
 {
     char *name;
     int length;
-    LVar *arguments;
+    Variables *arguments;
 };
 
 typedef struct FunctionTableLinkedList FunctionTableLinkedList;
@@ -78,8 +78,8 @@ struct Function
 {
     char *name;
     int length;
-    LVar *arguments;
-    LVar *local_variables;
+    Variables *arguments;
+    Variables *local_variables;
     NodeReferenceVector *statements;
 };
 
@@ -122,9 +122,9 @@ struct Type
     int array_size;
 };
 
-struct LVar
+struct Variables
 { // local variable list presented by linked list
-    LVar *next;
+    Variables *next;
     char *name;
     int len;
     int offset;
@@ -160,7 +160,7 @@ bool at_eof();
 */
 
 int desired_stack_size(Type *type);
-void add_variables(LVar **variables_ptr, TypeKind element_kind);
+void add_variables(Variables **variables_ptr, TypeKind element_kind);
 void program();
 Function *function();
 Node *stmt();
@@ -178,7 +178,7 @@ Node *new_node_num(int val);
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *consume_ident();
 Token *expect_ident();
-LVar *find_lvar(Token *tok);
+Variables *find_lvar(Token *tok);
 FunctionTable *find_function(Token *tok);
 void tokenize();
 int is_alnum(char c);
@@ -194,8 +194,8 @@ Node *get(NodeReferenceVector *vector, int index);
 extern Token *token; // current token
 extern char *user_input;
 extern Function *functions[100];
-extern LVar *locals;
-extern LVar *globals;
+extern Variables *locals;
+extern Variables *globals;
 extern FunctionTableLinkedList *function_table;
 extern int current_node_id;
 
