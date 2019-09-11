@@ -5,6 +5,7 @@
 // Node *code[100];
 Function *functions[100];
 LVar *locals;
+LVar *globals;
 
 int main(int argc, char **argv)
 {

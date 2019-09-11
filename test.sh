@@ -72,4 +72,8 @@ try 3 'int main() {int a[2]; *a=1; *(a+1) = 2; int *p; p = a; return *p + *(p+1)
 try 6 'int main() {int a[3]; *a=1; *(a+1) = 2; *(a+2) = 3; int *p; p = a; return *p + *(p+1) + *(p+2);}'
 try 3 'int main() {int a[2]; a[0]=1; a[1] = 2;  return a[0] + a[1];}'
 try 8 'int main() {int a[3]; a[0]=1; a[1] = 2; a[2] = 3; int *p; p = a; p[0] = p[2]; return a[0] + a[1] + a[2];}'
+try 10 'int a; int main() {int a; a = 10; return a;}'
+try 5 'int b[3]; int main() {int b; b = 5; return b;}'
+try 8 'int a; int main() {int a[3]; a[0]=1; a[1] = 2; a[2] = 3; int *p; p = a; p[0] = p[2]; return a[0] + a[1] + a[2];}'
+
 echo "OK"

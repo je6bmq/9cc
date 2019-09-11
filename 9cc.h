@@ -108,14 +108,16 @@ struct NodeReferenceVector
     int element_size;
 };
 
+typedef enum
+{
+    INT,
+    POINTER,
+    ARRAY,
+} TypeKind;
+
 struct Type
 {
-    enum
-    {
-        INT,
-        POINTER,
-        ARRAY,
-    } kind;
+    TypeKind kind;
     struct Type *to_type;
     int array_size;
 };
@@ -139,7 +141,7 @@ bool at_eof();
 
 /* --production rule--
 
-    program = function*
+    program = ("int" ident ("[" num "]") ";") | function*
     function = "int" ident ( "int" ident,*) { stmt*}
     stmt    = expr ";"
             | "{" stmt* "}"
@@ -157,7 +159,8 @@ bool at_eof();
                | "(" expr ")"
 */
 
-int desired_stack_size(Type* type);
+int desired_stack_size(Type *type);
+void add_variables(LVar **variables_ptr, TypeKind element_kind);
 void program();
 Function *function();
 Node *stmt();
@@ -192,6 +195,7 @@ extern Token *token; // current token
 extern char *user_input;
 extern Function *functions[100];
 extern LVar *locals;
+extern LVar *globals;
 extern FunctionTableLinkedList *function_table;
 extern int current_node_id;
 

@@ -10,6 +10,7 @@ Token *token; // current token
 char *user_input;
 Function *functions[100];
 LVar *locals;
+LVar *globals;
 FunctionTableLinkedList *function_table;
 int current_node_id;
 
@@ -448,12 +449,105 @@ Function *function()
     return func;
 }
 
+void add_variables(LVar **variables_ptr, TypeKind element_kind)
+{
+    Type *type = (Type *)calloc(1, sizeof(Type));
+    type->kind = element_kind;
+    type->to_type = NULL;
+
+    while (consume("*"))
+    {
+        Type *tmp_type = type;
+        type = (Type *)calloc(1, sizeof(Type));
+        type->kind = POINTER;
+        type->to_type = tmp_type;
+        type->array_size = 0;
+    }
+
+    Token *tok = expect_ident();
+    if (consume("["))
+    {
+        Type *tmp_type = type;
+        type = (Type *)calloc(1, sizeof(Type));
+        type->to_type = tmp_type;
+        type->kind = ARRAY;
+        type->array_size = expect_number();
+        expect("]");
+    }
+
+    LVar *lvar = (LVar *)calloc(1, sizeof(LVar));
+    LVar *lvar_next = (LVar *)calloc(1, sizeof(LVar));
+    for (LVar *var = (*variables_ptr); var; var = var->next)
+    {
+        lvar = var;
+    }
+    lvar_next->name = tok->str;
+    lvar_next->len = tok->len;
+    lvar_next->offset = (lvar ? lvar->offset : 0) + desired_stack_size(type);
+    lvar_next->type = type;
+
+    if (lvar)
+    {
+        lvar->next = lvar_next;
+    }
+    else
+    {
+        if (*variables_ptr)
+        {
+            (*variables_ptr)->next = lvar_next;
+        }
+        else
+        {
+            (*variables_ptr) = lvar_next;
+        }
+    }
+}
+
 void program()
 {
     int i = 0;
     while (!at_eof())
     {
-        functions[i++] = function();
+        Token *tmp_token = token;
+        bool is_global_variable = false;
+        if (memcmp(tmp_token->str, "int", 3) == 0)
+        {
+            tmp_token = tmp_token->next;
+            while (memcmp(tmp_token->str, "*", 1) == 0)
+            {
+                tmp_token = tmp_token->next;
+            }
+            if (tmp_token->kind != TK_IDENT)
+            {
+                error_at(tmp_token->str, "変数または関数名ではありません．");
+            }
+            tmp_token = tmp_token->next;
+            is_global_variable = memcmp(tmp_token->str,"(",1) != 0;
+            // if (memcmp(tmp_token->str, "[", 1) == 0)
+            // {
+            //     tmp_token = tmp_token->next;
+            //     while(memcmp(tmp_token->str, ")", 1) != 0)
+            //     {
+            //         tmp_token = tmp_token->next;
+            //         if(tmp_token == NULL) {
+            //             error("関数の括弧が閉じられていません．");
+            //         }
+            //     }
+            //     tmp_token = tmp_token->next;
+            //     is_global_variable = memcmp(tmp_token->str, "{", 1) != 0;
+            // }
+        }
+
+        if (is_global_variable)
+        {
+            expect("int");
+            add_variables(&globals, INT);
+            expect(";");
+        }
+        else
+        {
+            functions[i++] = function();
+        }
     }
     functions[i] = NULL;
 }
@@ -556,56 +650,57 @@ Node *stmt()
     }
     else if (consume("int"))
     {
-        Type *type = (Type *)calloc(1, sizeof(Type));
-        type->kind = INT;
-        type->to_type = NULL;
+        // Type *type = (Type *)calloc(1, sizeof(Type));
+        // type->kind = INT;
+        // type->to_type = NULL;
 
-        while (consume("*"))
-        {
-            Type *tmp_type = type;
-            type = (Type *)calloc(1, sizeof(Type));
-            type->kind = POINTER;
-            type->to_type = tmp_type;
-            type->array_size = 0;
-        }
+        // while (consume("*"))
+        // {
+        //     Type *tmp_type = type;
+        //     type = (Type *)calloc(1, sizeof(Type));
+        //     type->kind = POINTER;
+        //     type->to_type = tmp_type;
+        //     type->array_size = 0;
+        // }
 
-        Token *tok = expect_ident();
-        if (consume("["))
-        {
-            Type *tmp_type = type;
-            type = (Type *)calloc(1, sizeof(Type));
-            type->to_type = tmp_type;
-            type->kind = ARRAY;
-            type->array_size = expect_number();
-            expect("]");
-        }
+        // Token *tok = expect_ident();
+        // if (consume("["))
+        // {
+        //     Type *tmp_type = type;
+        //     type = (Type *)calloc(1, sizeof(Type));
+        //     type->to_type = tmp_type;
+        //     type->kind = ARRAY;
+        //     type->array_size = expect_number();
+        //     expect("]");
+        // }
 
-        LVar *lvar = (LVar *)calloc(1, sizeof(LVar));
-        LVar *lvar_next = (LVar *)calloc(1, sizeof(LVar));
-        for (LVar *var = locals; var; var = var->next)
-        {
-            lvar = var;
-        }
-        lvar_next->name = tok->str;
-        lvar_next->len = tok->len;
-        lvar_next->offset = (lvar ? lvar->offset : 0) + desired_stack_size(type);
-        lvar_next->type = type;
+        // LVar *lvar = (LVar *)calloc(1, sizeof(LVar));
+        // LVar *lvar_next = (LVar *)calloc(1, sizeof(LVar));
+        // for (LVar *var = locals; var; var = var->next)
+        // {
+        //     lvar = var;
+        // }
+        // lvar_next->name = tok->str;
+        // lvar_next->len = tok->len;
+        // lvar_next->offset = (lvar ? lvar->offset : 0) + desired_stack_size(type);
+        // lvar_next->type = type;
 
-        if (lvar)
-        {
-            lvar->next = lvar_next;
-        }
-        else
-        {
-            if (locals)
-            {
-                locals->next = lvar_next;
-            }
-            else
-            {
-                locals = lvar_next;
-            }
-        }
+        // if (lvar)
+        // {
+        //     lvar->next = lvar_next;
+        // }
+        // else
+        // {
+        //     if (locals)
+        //     {
+        //         locals->next = lvar_next;
+        //     }
+        //     else
+        //     {
+        //         locals = lvar_next;
+        //     }
+        // }
+        add_variables(&locals, INT);
         node = new_node(ND_DECL, NULL, NULL);
     }
     else
@@ -764,7 +859,8 @@ Node *unary()
     {
         Node *lhs = unary();
         Node *node = new_node(ND_DEREF, lhs, NULL);
-        if(lhs->type->to_type == NULL) {
+        if (lhs->type->to_type == NULL)
+        {
             error_at(token->str, "参照外し可能な変数ではありません．");
         }
         node->type = lhs->type->to_type;
@@ -951,13 +1047,16 @@ Node *term()
                     Node *array = node;
                     Node *indexed_pointer = new_node(ND_ADD, array, index);
                     indexed_pointer->type = array->type;
-                    node = new_node(ND_DEREF, indexed_pointer,NULL);
-                    if(indexed_pointer->type->to_type == NULL || (array->type->kind != ARRAY && array->type->kind != POINTER)) {
+                    node = new_node(ND_DEREF, indexed_pointer, NULL);
+                    if (indexed_pointer->type->to_type == NULL || (array->type->kind != ARRAY && array->type->kind != POINTER))
+                    {
                         error_at(token->str, "添字アクセスをサポートしていません．");
                     }
-                    if(index->kind == ND_NUM) {
+                    if (index->kind == ND_NUM)
+                    {
                         int i = index->val;
-                        if(i >= array->type->array_size) {
+                        if (i >= array->type->array_size)
+                        {
                             warn_at(token->str, "配列外参照の可能性があります．");
                         }
                     }
