@@ -75,5 +75,6 @@ try 8 'int main() {int a[3]; a[0]=1; a[1] = 2; a[2] = 3; int *p; p = a; p[0] = p
 try 10 'int a; int main() {int a; a = 10; return a;}'
 try 5 'int b[3]; int main() {int b; b = 5; return b;}'
 try 8 'int a; int main() {int a[3]; a[0]=1; a[1] = 2; a[2] = 3; int *p; p = a; p[0] = p[2]; return a[0] + a[1] + a[2];}'
-
+try 5 'int a; int main() {a = 5; return a;}'
+try 10 'int a; int b[20]; int main() { b[0] = 1; b[1] = b[0]; a = 8; return a + b[0] + b[1]; }'
 echo "OK"

@@ -5,13 +5,23 @@ Token *token;
 
 void gen_lval(Node *node)
 {
-    if (node->kind != ND_LVAR)
+    if (node->kind != ND_LVAR && node->kind != ND_GVAR)
     {
         error("代入の左辺値が変数ではありません");
     }
 
-    printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", node->offset);
+    if(node->kind == ND_LVAR) {
+        printf("    mov rax, rbp\n");
+        printf("    sub rax, %d\n", node->offset);
+    } else if(node->kind == ND_GVAR) {
+        printf("    lea rax, ");
+        for(int i = 0; i<node->name_length; i++) {
+            printf("%c", node->name[i]);
+        }
+        printf("[rip]\n");
+    } else {
+        error("未実装です．");
+    }
     printf("    push rax\n");
 }
 
@@ -33,6 +43,7 @@ void gen(Node *node)
         printf("    push %d\n", node->val);
         return;
     case ND_LVAR:
+    case ND_GVAR:
         gen_lval(node);
         printf("    pop rax\n");
         if (node->type->kind == POINTER)

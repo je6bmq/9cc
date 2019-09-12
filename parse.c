@@ -275,13 +275,16 @@ void tokenize()
     token = head.next;
 }
 
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs, char *name, int name_length)
 {
     Node *node = calloc(1, sizeof(Node));
     node->id = current_node_id++;
     node->kind = kind;
     node->lhs = lhs;
     node->rhs = rhs;
+
+    node->name = name;
+    node->name_length = name_length;
 
     return node;
 }
@@ -392,6 +395,7 @@ Function *function()
             arg->name = token->str;
             arg->len = token->len;
             arg->type = type;
+            arg->scope = LOCAL;
 
             int current_offset = 0;
             for (Variables *var = arguments; var; var = var->next)
@@ -432,6 +436,7 @@ Function *function()
         }
     }
     locals = (Variables *)calloc(1, sizeof(Variables));
+    locals->scope = LOCAL;
     func_table->arguments = arguments; // "arguments" indicates pointer, so this statement has to be placed after parsing arguments.
     func->arguments = arguments;
     Variables *arg_last = locals;
@@ -449,7 +454,7 @@ Function *function()
     return func;
 }
 
-void add_variables(Variables **variables_ptr, TypeKind element_kind)
+void add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope)
 {
     Type *type = (Type *)calloc(1, sizeof(Type));
     type->kind = element_kind;
@@ -475,7 +480,8 @@ void add_variables(Variables **variables_ptr, TypeKind element_kind)
         expect("]");
     }
 
-    Variables *lvar = (Variables *)calloc(1, sizeof(Variables));
+    // Variables *lvar = (Variables *)calloc(1, sizeof(Variables));
+    Variables *lvar = NULL;
     Variables *lvar_next = (Variables *)calloc(1, sizeof(Variables));
     for (Variables *var = (*variables_ptr); var; var = var->next)
     {
@@ -483,16 +489,17 @@ void add_variables(Variables **variables_ptr, TypeKind element_kind)
     }
     lvar_next->name = tok->str;
     lvar_next->len = tok->len;
-    lvar_next->offset = (lvar ? lvar->offset : 0) + desired_stack_size(type);
+    lvar_next->offset = (scope == GLOBAL ? 0  : (lvar ? lvar->offset : 0)) + desired_stack_size(type);
     lvar_next->type = type;
+    lvar_next->scope = scope;
 
-    if (lvar)
+    if (lvar != NULL)
     {
         lvar->next = lvar_next;
     }
     else
     {
-        if (*variables_ptr)
+        if (*variables_ptr != NULL)
         {
             (*variables_ptr)->next = lvar_next;
         }
@@ -522,13 +529,13 @@ void program()
                 error_at(tmp_token->str, "変数または関数名ではありません．");
             }
             tmp_token = tmp_token->next;
-            is_global_variable = memcmp(tmp_token->str,"(",1) != 0;
+            is_global_variable = memcmp(tmp_token->str, "(", 1) != 0;
         }
 
         if (is_global_variable)
         {
             expect("int");
-            add_variables(&globals, INT);
+            add_variables(&globals, INT, GLOBAL);
             expect(";");
         }
         else
@@ -549,7 +556,7 @@ Node *stmt()
         Node *condition = expr();
         expect(")");
         Node *if_true_statement = stmt();
-        node = new_node(ND_IF, condition, if_true_statement);
+        node = new_node(ND_IF, condition, if_true_statement, NULL, 0);
         if (consume("else"))
         {
             node->other = stmt();
@@ -567,7 +574,7 @@ Node *stmt()
         Node *condition = expr();
         expect(")");
         Node *process = stmt();
-        node = new_node(ND_WHILE, condition, process);
+        node = new_node(ND_WHILE, condition, process, NULL, 0);
         return node;
     }
 
@@ -587,7 +594,7 @@ Node *stmt()
         Node *condition;
         if (consume(";"))
         {
-            condition = new_node(ND_LESS_THAN, new_node_num(0), new_node_num(1));
+            condition = new_node(ND_LESS_THAN, new_node_num(0), new_node_num(1), NULL, 0);
         }
         else
         {
@@ -605,7 +612,7 @@ Node *stmt()
             expect(")");
         }
 
-        node = new_node(ND_FOR, initial, condition);
+        node = new_node(ND_FOR, initial, condition, NULL, 0);
 
         Node *statement;
         statement = stmt();
@@ -617,7 +624,7 @@ Node *stmt()
 
     if (consume("{"))
     {
-        node = new_node(ND_BLOCK, NULL, NULL);
+        node = new_node(ND_BLOCK, NULL, NULL, NULL, 0);
         NodeReferenceVector *vector = new_vec();
         while (!consume("}"))
         {
@@ -637,8 +644,8 @@ Node *stmt()
     }
     else if (consume("int"))
     {
-        add_variables(&locals, INT);
-        node = new_node(ND_DECL, NULL, NULL);
+        add_variables(&locals, INT, LOCAL);
+        node = new_node(ND_DECL, NULL, NULL, NULL, 0);
     }
     else
     {
@@ -662,7 +669,7 @@ Node *assign()
     Node *node = equality();
     if (consume("="))
     {
-        node = new_node(ND_ASSIGN, node, assign());
+        node = new_node(ND_ASSIGN, node, assign(), NULL, 0);
     }
     return node;
 }
@@ -674,11 +681,11 @@ Node *equality()
     {
         if (consume("=="))
         {
-            node = new_node(ND_EQUAL, node, relational());
+            node = new_node(ND_EQUAL, node, relational(), NULL, 0);
         }
         else if (consume("!="))
         {
-            node = new_node(ND_NOT_EQUAL, node, relational());
+            node = new_node(ND_NOT_EQUAL, node, relational(), NULL, 0);
         }
         else
         {
@@ -694,19 +701,19 @@ Node *relational()
     {
         if (consume("<"))
         {
-            node = new_node(ND_LESS_THAN, node, add());
+            node = new_node(ND_LESS_THAN, node, add(), NULL, 0);
         }
         else if (consume("<="))
         {
-            node = new_node(ND_LESS_EQUAL, node, add());
+            node = new_node(ND_LESS_EQUAL, node, add(), NULL, 0);
         }
         else if (consume(">"))
         {
-            node = new_node(ND_LESS_THAN, add(), node);
+            node = new_node(ND_LESS_THAN, add(), node, NULL, 0);
         }
         else if (consume(">="))
         {
-            node = new_node(ND_LESS_EQUAL, add(), node);
+            node = new_node(ND_LESS_EQUAL, add(), node, NULL, 0);
         }
         else
         {
@@ -734,12 +741,12 @@ Node *add()
 
         if (consume("+"))
         {
-            node = new_node(ND_ADD, node, mul());
+            node = new_node(ND_ADD, node, mul(), NULL, 0);
             node->type = type;
         }
         else if (consume("-"))
         {
-            node = new_node(ND_SUB, node, mul());
+            node = new_node(ND_SUB, node, mul(), NULL, 0);
             node->type = type;
         }
         else
@@ -767,7 +774,7 @@ Node *mul()
         }
         if (consume("*"))
         {
-            node = new_node(ND_MUL, node, unary());
+            node = new_node(ND_MUL, node, unary(), NULL, 0);
             node->type = type;
             if (node->type != NULL && node->type->kind == POINTER)
             {
@@ -776,7 +783,7 @@ Node *mul()
         }
         else if (consume("/"))
         {
-            node = new_node(ND_DIV, node, unary());
+            node = new_node(ND_DIV, node, unary(), NULL, 0);
             node->type = type;
             if (node->type != NULL && node->type->kind == POINTER)
             {
@@ -795,7 +802,7 @@ Node *unary()
     if (consume("*"))
     {
         Node *lhs = unary();
-        Node *node = new_node(ND_DEREF, lhs, NULL);
+        Node *node = new_node(ND_DEREF, lhs, NULL, NULL, 0);
         if (lhs->type->to_type == NULL)
         {
             error_at(token->str, "参照外し可能な変数ではありません．");
@@ -810,7 +817,7 @@ Node *unary()
         type->kind = POINTER;
         type->to_type = lhs->type;
 
-        Node *node = new_node(ND_ADDR, lhs, NULL);
+        Node *node = new_node(ND_ADDR, lhs, NULL, NULL, 0);
         node->type = type;
         return node;
     }
@@ -820,7 +827,7 @@ Node *unary()
     }
     if (consume("-"))
     {
-        return new_node(ND_SUB, new_node_num(0), term());
+        return new_node(ND_SUB, new_node_num(0), term(), NULL, 0);
     }
     if (consume("sizeof"))
     {
@@ -955,6 +962,7 @@ Node *term()
                         Variables *arg = (Variables *)calloc(1, sizeof(Variables));
                         arg->len = 1;
                         arg->name = tmp_arg_names[i];
+                        arg->scope = LOCAL;
                         args->next = arg;
                         args = arg;
                     }
@@ -972,19 +980,31 @@ Node *term()
         else
         {
             Variables *lvar = find_lvar(tok);
-            node->kind = ND_LVAR;
+
+            if (lvar == NULL)
+            {
+                lvar = find_gvar(tok);
+                node->kind = ND_GVAR;
+            }
+            else
+            {
+                node->kind = ND_LVAR;
+            }
+
             if (lvar)
             {
                 // found
                 node->offset = lvar->offset;
                 node->type = lvar->type;
+                node->name = tok->str;
+                node->name_length = tok->len;
                 if (consume("["))
                 { // array indexing
                     Node *index = expr();
                     Node *array = node;
-                    Node *indexed_pointer = new_node(ND_ADD, array, index);
+                    Node *indexed_pointer = new_node(ND_ADD, array, index, NULL, 0);
                     indexed_pointer->type = array->type;
-                    node = new_node(ND_DEREF, indexed_pointer, NULL);
+                    node = new_node(ND_DEREF, indexed_pointer, NULL, NULL, 0);
                     if (indexed_pointer->type->to_type == NULL || (array->type->kind != ARRAY && array->type->kind != POINTER))
                     {
                         error_at(token->str, "添字アクセスをサポートしていません．");
@@ -1028,6 +1048,26 @@ Variables *find_lvar(Token *tok)
 {
     for (Variables *var = locals; var; var = var->next)
     {
+        if (var->scope != LOCAL)
+        {
+            error("ローカル変数が正しく検出されていません．%d", var->scope);
+        }
+        if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+        {
+            return var;
+        }
+    }
+    return NULL;
+}
+
+Variables *find_gvar(Token *tok)
+{
+    for (Variables *var = globals; var; var = var->next)
+    {
+        if (var->scope != GLOBAL)
+        {
+            error("ローカル変数が正しく検出されていません．");
+        }
         if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
         {
             return var;

@@ -39,6 +39,7 @@ typedef enum
     ND_LESS_EQUAL, // <=
     ND_ASSIGN,     // =
     ND_LVAR,       // local variable
+    ND_GVAR,       // global variable
     ND_NUM,        // integer
     ND_RETURN,     // return
     ND_IF,         // if statement
@@ -86,6 +87,8 @@ struct Function
 struct Node
 {
     int id;
+    char* name;
+    int name_length;
     NodeKind kind;
     Node *lhs;
     Node *rhs;
@@ -122,6 +125,13 @@ struct Type
     int array_size;
 };
 
+typedef enum
+{
+    BLOCK,
+    LOCAL,
+    GLOBAL
+} Scope;
+
 struct Variables
 { // local variable list presented by linked list
     Variables *next;
@@ -129,6 +139,7 @@ struct Variables
     int len;
     int offset;
     Type *type;
+    Scope scope;
 };
 
 void error_at(char *loc, char *fmt, ...);
@@ -160,7 +171,7 @@ bool at_eof();
 */
 
 int desired_stack_size(Type *type);
-void add_variables(Variables **variables_ptr, TypeKind element_kind);
+void add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope);
 void program();
 Function *function();
 Node *stmt();
@@ -172,13 +183,14 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *term();
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs, char* name, int name_length);
 Node *new_node_num(int val);
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *consume_ident();
 Token *expect_ident();
 Variables *find_lvar(Token *tok);
+Variables *find_gvar(Token *tok);
 FunctionTable *find_function(Token *tok);
 void tokenize();
 int is_alnum(char c);
