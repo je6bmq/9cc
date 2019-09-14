@@ -51,20 +51,6 @@ int main(int argc, char **argv)
     }
     printf("\n\n");
 
-    // for (Variables *vars = globals; vars; vars = vars->next)
-    // {
-    //     if (vars->scope != GLOBAL)
-    //     {
-    //         error("グローバル変数の読み込みに失敗しました．");
-    //     }
-    //     for (int i = 0; i < vars->len; i++)
-    //     {
-    //         printf("%c", vars->name[i]);
-    //     }
-    //     printf(":\n");
-    //     printf("    .zero %d\n", vars->offset);
-    // }
-
     char *registers[6] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 
     for (int i = 0; functions[i]; i++)

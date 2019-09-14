@@ -10,16 +10,22 @@ void gen_lval(Node *node)
         error("代入の左辺値が変数ではありません");
     }
 
-    if(node->kind == ND_LVAR) {
+    if (node->kind == ND_LVAR)
+    {
         printf("    mov rax, rbp\n");
         printf("    sub rax, %d\n", node->offset);
-    } else if(node->kind == ND_GVAR) {
+    }
+    else if (node->kind == ND_GVAR)
+    {
         printf("    lea rax, ");
-        for(int i = 0; i<node->name_length; i++) {
+        for (int i = 0; i < node->name_length; i++)
+        {
             printf("%c", node->name[i]);
         }
         printf("[rip]\n");
-    } else {
+    }
+    else
+    {
         error("未実装です．");
     }
     printf("    push rax\n");
@@ -54,6 +60,16 @@ void gen(Node *node)
         {
             printf("    mov eax, DWORD PTR [rax]\n");
         }
+        else if (node->type->kind == CHAR)
+        {
+            printf("    movsx eax, BYTE PTR [rax]\n");
+        } else if(node->type->kind == ARRAY) {
+
+        }
+        else
+        {
+            error("型情報が不明です．");
+        }
 
         printf("    push rax\n");
         return;
@@ -83,6 +99,14 @@ void gen(Node *node)
         else if (node->lhs->type->kind == INT)
         {
             printf("    mov DWORD PTR [rax], edi\n");
+        }
+        else if (node->lhs->type->kind == CHAR)
+        {
+            printf("    mov BYTE PTR [rax], dil\n");
+        }
+        else
+        {
+            error("型情報が不明です．");
         }
 
         printf("    push rdi\n");

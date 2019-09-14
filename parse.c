@@ -242,6 +242,13 @@ void tokenize()
             continue;
         }
 
+        if (memcmp(p, "char", 4) == 0 && (!is_alnum(p[4]) || p[4] == '*'))
+        {
+            cur = new_token(TK_RESERVED, cur, p, 4);
+            p += 4;
+            continue;
+        }
+
         if (memcmp(p, "sizeof", 6) == 0 && !is_alnum(p[6]))
         {
             cur = new_token(TK_SIZEOF, cur, p, 6);
@@ -313,6 +320,8 @@ int desired_stack_size(Type *type)
         return 4;
     case POINTER:
         return 8;
+    case CHAR:
+        return 1;
     case ARRAY:
     {
         int size = type->array_size;
@@ -330,10 +339,54 @@ int desired_stack_size(Type *type)
     }
 }
 
+Type *expect_type()
+{
+    Type *type = (Type *)calloc(1, sizeof(Type));
+    type->to_type = NULL;
+    type->array_size = 0;
+
+    if (consume("int"))
+    {
+        type->kind = INT;
+    }
+    else if (consume("char"))
+    {
+        type->kind = CHAR;
+    }
+    else
+    {
+        error_at(token->str, "返り値の型を明記してください．");
+    }
+    return type;
+}
+
+Type *consume_type()
+{
+    Type *type = (Type *)calloc(1, sizeof(Type));
+    type->to_type = NULL;
+    type->array_size = 0;
+
+    if (consume("int"))
+    {
+        type->kind = INT;
+    }
+    else if (consume("char"))
+    {
+        type->kind = CHAR;
+    }
+    else
+    {
+        type = NULL;
+    }
+    return type;
+}
+
 Function *function()
 {
     Function *func = (Function *)calloc(1, sizeof(Function));
-    expect("int");
+
+    Type *type = expect_type();
+
     func->statements = new_vec();
     if (token->kind != TK_IDENT)
     {
@@ -375,10 +428,7 @@ Function *function()
     {
         while (true)
         {
-            expect("int");
-            Type *type = (Type *)calloc(1, sizeof(Type));
-            type->kind = INT;
-            type->to_type = NULL;
+            Type *type = expect_type();
 
             while (consume("*"))
             {
@@ -489,7 +539,7 @@ void add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope
     }
     lvar_next->name = tok->str;
     lvar_next->len = tok->len;
-    lvar_next->offset = (scope == GLOBAL ? 0  : (lvar ? lvar->offset : 0)) + desired_stack_size(type);
+    lvar_next->offset = (scope == GLOBAL ? 0 : (lvar ? lvar->offset : 0)) + desired_stack_size(type);
     lvar_next->type = type;
     lvar_next->scope = scope;
 
@@ -534,8 +584,8 @@ void program()
 
         if (is_global_variable)
         {
-            expect("int");
-            add_variables(&globals, INT, GLOBAL);
+            Type *type = expect_type();
+            add_variables(&globals, type->kind, GLOBAL);
             expect(";");
         }
         else
@@ -642,14 +692,18 @@ Node *stmt()
         node->kind = ND_RETURN;
         node->lhs = expr();
     }
-    else if (consume("int"))
-    {
-        add_variables(&locals, INT, LOCAL);
-        node = new_node(ND_DECL, NULL, NULL, NULL, 0);
-    }
     else
     {
-        node = expr();
+        Type *type = consume_type();
+        if (type != NULL)
+        {
+            add_variables(&locals, type->kind, LOCAL);
+            node = new_node(ND_DECL, NULL, NULL, NULL, 0);
+        }
+        else
+        {
+            node = expr();
+        }
     }
 
     if (!consume(";"))
@@ -736,6 +790,7 @@ Node *add()
         }
         else
         {
+            warn_at(token->str, "型情報が不定です．");
             type = NULL;
         }
 
@@ -770,6 +825,7 @@ Node *mul()
         }
         else
         {
+            warn_at(token->str, "型情報が不定です．");
             type = NULL;
         }
         if (consume("*"))
@@ -849,6 +905,10 @@ Node *unary()
         else if (node->type->kind == INT)
         {
             return new_node_num(4);
+        }
+        else if (node->type->kind = CHAR)
+        {
+            return new_node_num(1);
         }
     }
 

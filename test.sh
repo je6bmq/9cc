@@ -77,4 +77,10 @@ try 5 'int b[3]; int main() {int b; b = 5; return b;}'
 try 8 'int a; int main() {int a[3]; a[0]=1; a[1] = 2; a[2] = 3; int *p; p = a; p[0] = p[2]; return a[0] + a[1] + a[2];}'
 try 5 'int a; int main() {a = 5; return a;}'
 try 10 'int a; int b[20]; int main() { b[0] = 1; b[1] = b[0]; a = 8; return a + b[0] + b[1]; }'
+try 1 'int main(){ char x; return sizeof(x);}';
+try 4 'int main() {char x; return sizeof(sizeof(x));}'
+try 10 'int main() {char x; x = 10; return x;}'
+try 100 'int main() {char x; int y; x = 50; y = x * 2; return y;}'
+try 3 'int main() { char x[3]; x[0] = -1; x[1] = 2; int y; y = 4; return x[0]+y; }'
+try 10 'int main() { char x[3]; x[0] = -1; x[1] = 2; x[2] = 4; char *p; p = x; p[0] = p[2]; return x[0] + x[1] + x[2]; }'
 echo "OK"

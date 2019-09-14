@@ -115,6 +115,7 @@ typedef enum
 {
     INT,
     POINTER,
+    CHAR,
     ARRAY,
 } TypeKind;
 
@@ -171,6 +172,8 @@ bool at_eof();
 */
 
 int desired_stack_size(Type *type);
+Type* expect_type();
+Type* consume_type();
 void add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope);
 void program();
 Function *function();
