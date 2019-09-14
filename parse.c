@@ -759,23 +759,30 @@ Node *equality()
 Node *relational()
 {
     Node *node = add();
+    Type *type = node->type;
+
     for (;;)
     {
         if (consume("<"))
         {
+
             node = new_node(ND_LESS_THAN, node, add(), NULL, 0);
+            node->type = type;
         }
         else if (consume("<="))
         {
             node = new_node(ND_LESS_EQUAL, node, add(), NULL, 0);
+            node->type = type;
         }
         else if (consume(">"))
         {
             node = new_node(ND_LESS_THAN, add(), node, NULL, 0);
+            node->type = type;
         }
         else if (consume(">="))
         {
             node = new_node(ND_LESS_EQUAL, add(), node, NULL, 0);
+            node->type = type;
         }
         else
         {
@@ -891,7 +898,10 @@ Node *unary()
     }
     if (consume("-"))
     {
-        return new_node(ND_SUB, new_node_num(0), term(), NULL, 0);
+        Node *rhs = term();
+        Node *node = new_node(ND_SUB, new_node_num(0), rhs, NULL, 0);
+        node->type = rhs->type;
+        return node;
     }
     if (consume("sizeof"))
     {
