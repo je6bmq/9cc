@@ -393,7 +393,7 @@ Function *function()
         type->kind = POINTER;
         type->to_type = tmp_type;
     }
-    
+
     func->statements = new_vec();
     if (token->kind != TK_IDENT)
     {
@@ -955,11 +955,13 @@ Node *term()
             if (func)
             {
                 is_declared_function = true;
+                node->type = func->return_type;
             }
             else
             {
                 // un-declared or in other file function
                 is_declared_function = false;
+                node->type = NULL;
                 func = (FunctionTable *)calloc(1, sizeof(FunctionTable));
                 func->name = tok->str;
                 func->length = tok->len;
