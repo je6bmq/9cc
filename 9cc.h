@@ -64,6 +64,7 @@ struct FunctionTable
 {
     char *name;
     int length;
+    Type *return_type;
     Variables *arguments;
 };
 
@@ -87,7 +88,7 @@ struct Function
 struct Node
 {
     int id;
-    char* name;
+    char *name;
     int name_length;
     NodeKind kind;
     Node *lhs;
@@ -172,8 +173,8 @@ bool at_eof();
 */
 
 int desired_stack_size(Type *type);
-Type* expect_type();
-Type* consume_type();
+Type *expect_type();
+Type *consume_type();
 void add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope);
 void program();
 Function *function();
@@ -186,7 +187,7 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *term();
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs, char* name, int name_length);
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs, char *name, int name_length);
 Node *new_node_num(int val);
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);

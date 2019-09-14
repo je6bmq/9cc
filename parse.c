@@ -386,7 +386,14 @@ Function *function()
     Function *func = (Function *)calloc(1, sizeof(Function));
 
     Type *type = expect_type();
-
+    while (consume("*"))
+    {
+        Type *tmp_type = type;
+        type = (Type *)calloc(1, sizeof(Type));
+        type->kind = POINTER;
+        type->to_type = tmp_type;
+    }
+    
     func->statements = new_vec();
     if (token->kind != TK_IDENT)
     {
@@ -403,6 +410,7 @@ Function *function()
     FunctionTable *func_table = (FunctionTable *)calloc(1, sizeof(FunctionTable));
     func_table->name = token->str;
     func_table->length = token->len;
+    func_table->return_type = type;
     list->value = func_table;
     if (function_table == NULL)
     {
