@@ -51,7 +51,9 @@ int main(int argc, char **argv)
     }
     printf("\n\n");
 
-    char *registers[6] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+    char *registers64[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+    char *registers32[6] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+    char *registers8[6] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 
     for (int i = 0; functions[i]; i++)
     {
@@ -81,7 +83,20 @@ int main(int argc, char **argv)
 
             printf("    mov rax, rbp\n");
             printf("    sub rax, %d\n", var->offset);
-            printf("    mov DWORD PTR [rax], %s\n", registers[arg_index++]);
+            switch (var->type->kind)
+            {
+            case POINTER:
+                printf("    mov QWORD PTR [rax], %s\n", registers64[arg_index++]);
+                break;
+            case INT:
+                printf("    mov DWORD PTR [rax], %s\n", registers32[arg_index++]);
+                break;
+            case CHAR:
+                printf("    mov BYTE PTR [rax], %s\n", registers8[arg_index++]);
+                break;
+            default:
+                error("引数に指定できない型です．");
+            }
         }
 
         for (int j = 0; j < functions[i]->statements->size; j++)

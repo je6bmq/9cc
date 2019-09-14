@@ -83,4 +83,6 @@ try 10 'int main() {char x; x = 10; return x;}'
 try 100 'int main() {char x; int y; x = 50; y = x * 2; return y;}'
 try 3 'int main() { char x[3]; x[0] = -1; x[1] = 2; int y; y = 4; return x[0]+y; }'
 try 10 'int main() { char x[3]; x[0] = -1; x[1] = 2; x[2] = 4; char *p; p = x; p[0] = p[2]; return x[0] + x[1] + x[2]; }'
+try 20 'char add(char x, char y) {return x+y;} int main() {char a; char b; a = 10; b = 10; return add(a, b);}'
+try 20 'int replace(char* p) {*p = 20; return 0;} int main() {char a; char* q; a = 10; q = &a; int r; r = replace(q); return a;}'
 echo "OK"
