@@ -14,6 +14,7 @@ typedef enum
     TK_WHILE,    // while statement
     TK_FOR,      // while statement
     TK_SIZEOF,   // sizeof operator
+    TK_STRING,   // string
 } TokenKind;
 
 typedef struct Token Token;
@@ -50,9 +51,12 @@ typedef enum
     ND_ADDR,       // & (address operator)
     ND_DEREF,      //  * (dereference operator)
     ND_DECL,       // variable declaration
+    ND_STRING,     // string
 } NodeKind;
 
 typedef struct NodeReferenceVector NodeReferenceVector;
+typedef struct TemporaryStringVector TemporaryStringVector;
+typedef struct String String;
 
 typedef struct Node Node;
 typedef struct FunctionTable FunctionTable;
@@ -110,6 +114,20 @@ struct NodeReferenceVector
     int capacity;
     Node **elements;
     int element_size;
+};
+
+struct TemporaryStringVector
+{
+    int size;
+    int capacity;
+    String **elements;
+};
+
+struct String
+{
+    int id;
+    char *value_str;
+    int value_len;
 };
 
 typedef enum
@@ -170,6 +188,7 @@ bool at_eof();
     term       = num 
                | ident ("(" expr,* ")")?
                | "(" expr ")"
+               | "\" string* \""
 */
 
 int desired_stack_size(Type *type);
@@ -201,9 +220,13 @@ int is_alnum(char c);
 
 void gen(Node *node);
 
-NodeReferenceVector *new_vec();
-void push(NodeReferenceVector *vector, Node *new_element);
-Node *get(NodeReferenceVector *vector, int index);
+NodeReferenceVector *new_node_vec();
+void push_node(NodeReferenceVector *vector, Node *new_element);
+Node *get_node(NodeReferenceVector *vector, int index);
+TemporaryStringVector *new_string_vec();
+void push_string(TemporaryStringVector *vector, String *new_element);
+String *get_string(TemporaryStringVector *vector, int index);
+
 /*
     global variables
  */
@@ -214,5 +237,7 @@ extern Variables *locals;
 extern Variables *globals;
 extern FunctionTableLinkedList *function_table;
 extern int current_node_id;
+extern int temporary_string_id;
+extern TemporaryStringVector *string_vector;
 
 #endif

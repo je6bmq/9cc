@@ -8,7 +8,7 @@ try() {
     tmp_o=$(mktemp ./XXXXXX)
 
     ./9cc "$input" > $tmp_s
-    gcc -o $tmp_o $tmp_s
+    gcc -o $tmp_o $tmp_s -no-pie
     $tmp_o
 
     actual="$?"
@@ -86,4 +86,6 @@ try 10 'int main() { char x[3]; x[0] = -1; x[1] = 2; x[2] = 4; char *p; p = x; p
 try 20 'char add(char x, char y) {return x+y;} int main() {char a; char b; a = 10; b = 10; return add(a, b);}'
 try 20 'int replace(char* p) {*p = 20; return 0;} int main() {char a; char* q; a = 10; q = &a; int r; r = replace(q); return a;}'
 try 20 'char* replace(char* p) {*p = 20; return p;} int main() {char a; char* q; a = 10; q = replace(&a); return a;}'
+try 97 'int main() { char* x; x = "abc"; return x[0];}'
+try 98 'char* boo() {return "bcd";} int main() { char* p; p = boo(); return p[0];}'
 echo "OK"

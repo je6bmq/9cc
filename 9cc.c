@@ -6,6 +6,8 @@
 Function *functions[100];
 Variables *locals;
 Variables *globals;
+TemporaryStringVector* string_vector;
+int temporary_string_id;
 
 int main(int argc, char **argv)
 {
@@ -50,6 +52,17 @@ int main(int argc, char **argv)
         }
     }
     printf("\n\n");
+
+    for(int i = 0; i< temporary_string_id; i++) {
+        String* str = get_string(string_vector, i);
+        printf(".LC%d:\n", i);
+        printf("    .string \"");
+        for(int j = 0; j< str->value_len; j++) {
+            printf("%c", str->value_str[j]);
+        }
+        printf("\"\n");
+        printf("    .text\n");
+    }
 
     char *registers64[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
     char *registers32[6] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
@@ -101,7 +114,7 @@ int main(int argc, char **argv)
 
         for (int j = 0; j < functions[i]->statements->size; j++)
         {
-            Node *statement = get(functions[i]->statements, j);
+            Node *statement = get_node(functions[i]->statements, j);
             gen(statement);
             if (statement->kind != ND_RETURN)
             {

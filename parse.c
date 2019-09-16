@@ -12,7 +12,9 @@ Function *functions[100];
 Variables *locals;
 Variables *globals;
 FunctionTableLinkedList *function_table;
+TemporaryStringVector* string_vector;
 int current_node_id;
+int temporary_string_id;
 
 void error_at(char *loc, char *fmt, ...)
 {
@@ -275,6 +277,19 @@ void tokenize()
             continue;
         }
 
+        if(memcmp(p, "\"", 1) == 0 ) {
+            cur = new_token(TK_RESERVED, cur, p++ , 1);// skip first "\""
+            int str_count = 0;
+            while(memcmp(p + str_count, "\"", 1) != 0){
+                str_count++;
+            }
+
+            cur = new_token(TK_STRING, cur, p, str_count);
+            p+=str_count; 
+            cur = new_token(TK_RESERVED, cur, p++, 1);// skip last "\""
+            continue;
+        }
+
         error_at(token->str, "トークナイズできません");
     }
 
@@ -394,7 +409,7 @@ Function *function()
         type->to_type = tmp_type;
     }
 
-    func->statements = new_vec();
+    func->statements = new_node_vec();
     if (token->kind != TK_IDENT)
     {
         fprintf(stderr, "関数名ではありません．");
@@ -506,7 +521,7 @@ Function *function()
     expect("{");
     while (!consume("}"))
     {
-        push(func->statements, stmt());
+        push_node(func->statements, stmt());
     }
     func->local_variables = locals; // set local variables in current function.
     return func;
@@ -683,11 +698,11 @@ Node *stmt()
     if (consume("{"))
     {
         node = new_node(ND_BLOCK, NULL, NULL, NULL, 0);
-        NodeReferenceVector *vector = new_vec();
+        NodeReferenceVector *vector = new_node_vec();
         while (!consume("}"))
         {
             Node *statement = stmt();
-            push(vector, statement);
+            push_node(vector, statement);
         }
         node->statements = vector;
         return node;
@@ -939,6 +954,29 @@ Node *term()
     {
         Node *node = expr();
         expect(")");
+        return node;
+    }
+
+    if(consume("\"")) {
+        String* str = (String*)calloc(1,sizeof(String));
+        str->id = temporary_string_id++;
+        str->value_str = token->str;
+        str->value_len = token->len;
+        if(string_vector == NULL) {
+            string_vector = new_string_vec();
+        }
+        push_string(string_vector, str);
+        Node* node = new_node(ND_STRING, new_node_num(str->id), NULL,NULL, 0);
+        Type* type = (Type*)calloc(1,sizeof(Type));
+        type->kind = POINTER;
+
+        type->to_type = (Type*)calloc(1,sizeof(Type));
+        type->to_type->kind = CHAR;
+        type->to_type->to_type = NULL;
+        type->to_type->array_size = 0;
+        node->type = type;
+        token = token->next;
+        expect("\"");
         return node;
     }
 

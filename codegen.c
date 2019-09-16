@@ -183,7 +183,7 @@ void gen(Node *node)
     case ND_BLOCK:
         for (int i = 0; i < node->statements->size; i++)
         {
-            gen(get(node->statements, i));
+            gen(get_node(node->statements, i));
             printf("    pop rax\n");
         }
         printf("    push rax\n");
@@ -215,6 +215,10 @@ void gen(Node *node)
     }
         return;
     case ND_DECL:
+        printf("    push rax\n");
+        return;
+    case ND_STRING:
+        printf("    mov rax, OFFSET FLAT:.LC%d\n", node->lhs->val);
         printf("    push rax\n");
         return;
     }
