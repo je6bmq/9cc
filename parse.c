@@ -820,7 +820,6 @@ Node *add()
         }
         else
         {
-            warn_at(token->str, "型情報が不定です．");
             type = NULL;
         }
 
