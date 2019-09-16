@@ -169,6 +169,7 @@ bool consume(char *op);
 void expect(char *op);
 int expect_number();
 bool at_eof();
+char *read_file(char *path);
 
 /* --production rule--
 
@@ -239,5 +240,6 @@ extern FunctionTableLinkedList *function_table;
 extern int current_node_id;
 extern int temporary_string_id;
 extern TemporaryStringVector *string_vector;
+extern char* file_name;
 
 #endif

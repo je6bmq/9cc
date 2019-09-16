@@ -6,8 +6,10 @@
 Function *functions[100];
 Variables *locals;
 Variables *globals;
-TemporaryStringVector* string_vector;
+TemporaryStringVector *string_vector;
 int temporary_string_id;
+char* user_input;
+char *file_name;
 
 int main(int argc, char **argv)
 {
@@ -17,7 +19,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    user_input = argv[1];
+    file_name = argv[1];
+    user_input = read_file(file_name);
 
     tokenize();
     program();
@@ -53,11 +56,13 @@ int main(int argc, char **argv)
     }
     printf("\n\n");
 
-    for(int i = 0; i< temporary_string_id; i++) {
-        String* str = get_string(string_vector, i);
+    for (int i = 0; i < temporary_string_id; i++)
+    {
+        String *str = get_string(string_vector, i);
         printf(".LC%d:\n", i);
         printf("    .string \"");
-        for(int j = 0; j< str->value_len; j++) {
+        for (int j = 0; j < str->value_len; j++)
+        {
             printf("%c", str->value_str[j]);
         }
         printf("\"\n");
