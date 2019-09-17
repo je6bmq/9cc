@@ -117,7 +117,27 @@ void gen(Node *node)
     case ND_DEREF:
         gen(node->lhs);
         printf("    pop rax\n");
-        printf("    mov rax, QWORD PTR [rax]\n");
+        if(node->lhs->type->to_type == NULL) {
+            error("参照外しできません．");
+        } else {
+            TypeKind kind = node->lhs->type->to_type->kind;
+            switch(kind) {
+                case POINTER:
+                case ARRAY:
+                    printf("    mov rax, QWORD ");
+                    break;
+                case INT:
+                    printf("    mov eax, DWORD ");
+                    break;
+                case CHAR:
+                    printf("    movsx eax, BYTE ");
+                    break;
+                default:
+                    error("未実装の型です．");
+            }
+            printf("PTR [rax]\n");
+        }
+        // printf("    mov rax, QWORD PTR [rax]\n");
         printf("    push rax\n");
         return;
     case ND_IF:
