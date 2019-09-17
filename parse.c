@@ -685,7 +685,7 @@ void program()
     {
         Token *tmp_token = token;
         bool is_global_variable = false;
-        if (memcmp(tmp_token->str, "int", 3) == 0)
+        if (memcmp(tmp_token->str, "int", 3) == 0 || memcmp(tmp_token->str, "char", 4) == 0)
         {
             tmp_token = tmp_token->next;
             while (memcmp(tmp_token->str, "*", 1) == 0)
