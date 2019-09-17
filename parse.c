@@ -238,6 +238,27 @@ void tokenize()
             continue;
         }
 
+        // skip line comment (like this comment)
+        if(strncmp(p, "//", 2) == 0) {
+            p += 2;
+            while(*p != '\n') {
+                p++;
+            }
+            continue;
+        }
+
+        /*
+            skip block comment (like this comment)
+        */
+        if(strncmp(p, "/*", 2) == 0) {
+            char *q = strstr(p+2, "*/");
+            if(!q) {
+                error_at(p,"コメントが閉じられていません．");
+            }
+            p = q + 2;
+            continue;
+        }
+
         if (strncmp(p, "if", 2) == 0 && !is_alnum(p[2]))
         {
             cur = new_token(TK_IF, cur, p, 2);
