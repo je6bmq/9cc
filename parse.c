@@ -17,6 +17,7 @@ TemporaryStringVector *string_vector;
 int current_node_id;
 int temporary_string_id;
 char *file_name; // 入力ファイル名
+NodeReferenceVector* global_expressions;
 
 // 指定されたファイルの内容を返す
 char *read_file(char *path)
@@ -239,9 +240,11 @@ void tokenize()
         }
 
         // skip line comment (like this comment)
-        if(strncmp(p, "//", 2) == 0) {
+        if (strncmp(p, "//", 2) == 0)
+        {
             p += 2;
-            while(*p != '\n') {
+            while (*p != '\n')
+            {
                 p++;
             }
             continue;
@@ -250,10 +253,12 @@ void tokenize()
         /*
             skip block comment (like this comment)
         */
-        if(strncmp(p, "/*", 2) == 0) {
-            char *q = strstr(p+2, "*/");
-            if(!q) {
-                error_at(p,"コメントが閉じられていません．");
+        if (strncmp(p, "/*", 2) == 0)
+        {
+            char *q = strstr(p + 2, "*/");
+            if (!q)
+            {
+                error_at(p, "コメントが閉じられていません．");
             }
             p = q + 2;
             continue;
@@ -622,7 +627,7 @@ Function *function()
     return func;
 }
 
-void add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope)
+Variables *add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope)
 {
     Type *type = (Type *)calloc(1, sizeof(Type));
     type->kind = element_kind;
@@ -660,6 +665,7 @@ void add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope
     lvar_next->offset = (scope == GLOBAL ? 0 : (lvar ? lvar->offset : 0)) + desired_stack_size(type);
     lvar_next->type = type;
     lvar_next->scope = scope;
+    lvar_next->initial_value_ptr = NULL;
 
     if (lvar != NULL)
     {
@@ -676,11 +682,14 @@ void add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope
             (*variables_ptr) = lvar_next;
         }
     }
+    return lvar_next;
 }
 
 void program()
 {
     int i = 0;
+    global_expressions = new_node_vec();
+
     while (!at_eof())
     {
         Token *tmp_token = token;
@@ -703,8 +712,28 @@ void program()
         if (is_global_variable)
         {
             Type *type = expect_type();
-            add_variables(&globals, type->kind, GLOBAL);
-            expect(";");
+            Variables *variable = add_variables(&globals, type->kind, GLOBAL);
+
+            Node *lvar = (Node *)calloc(1, sizeof(Node));
+            lvar->kind = ND_GVAR;
+            lvar->name = variable->name;
+            lvar->name_length = variable->len;
+            lvar->type = variable->type;
+
+            if (!consume(";"))
+            {
+                expect("=");
+
+                Node *node = new_node(ND_ASSIGN, lvar, expr(), NULL, 0);
+                expect(";");
+
+                push_node(global_expressions, node);
+            }
+            else
+            {
+                Node *node = new_node(ND_DECL, lvar, NULL, NULL, 0);
+                push_node(global_expressions, node);
+            }
         }
         else
         {

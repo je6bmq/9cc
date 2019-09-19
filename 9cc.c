@@ -27,19 +27,19 @@ int main(int argc, char **argv)
 
     printf(".intel_syntax noprefix\n");
 
-    for (Variables *vars = globals; vars; vars = vars->next)
-    {
-        printf(".comm   ");
-        if (vars->scope != GLOBAL)
-        {
-            error("グローバル変数の読み込みに失敗しました．");
-        }
-        for (int i = 0; i < vars->len; i++)
-        {
-            printf("%c", vars->name[i]);
-        }
-        printf(", %d\n", vars->offset);
-    }
+    // for (Variables *vars = globals; vars; vars = vars->next)
+    // {
+    //     printf(".comm   ");
+    //     if (vars->scope != GLOBAL)
+    //     {
+    //         error("グローバル変数の読み込みに失敗しました．");
+    //     }
+    //     for (int i = 0; i < vars->len; i++)
+    //     {
+    //         printf("%c", vars->name[i]);
+    //     }
+    //     printf(", %d\n", vars->offset);
+    // }
 
     printf(".global ");
 
@@ -67,6 +67,10 @@ int main(int argc, char **argv)
         }
         printf("\"\n");
         printf("    .text\n");
+    }
+
+    for(int i = 0; i < global_expressions->size; i++) {
+        gen_global(get_node(global_expressions, i));
     }
 
     char *registers64[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};

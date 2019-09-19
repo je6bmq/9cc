@@ -1,7 +1,172 @@
 #include "9cc.h"
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 Token *token;
+Variables *globals;
+
+int get_const_expr(Node *node, int u)
+{
+    switch (node->kind)
+    {
+    case ND_NUM:
+        return node->val;
+        break;
+    case ND_GVAR:
+    {
+        Variables *variable = NULL;
+        for (Variables *var = globals; var; var = var->next)
+        {
+            if (node->name_length == var->len && strncmp(node->name, var->name, node->name_length) == 0)
+            {
+                variable = var;
+            }
+        }
+
+        if (variable == NULL)
+        {
+            error("予期せぬエラーが発生しました");
+        }
+
+        if (variable->initial_value_ptr == NULL)
+        {
+            error("グローバル変数が初期化されていません．");
+        }
+        return *(variable->initial_value_ptr);
+    }
+    default:
+        break;
+    }
+
+    if (node->lhs == NULL)
+    {
+        error("式が構成されていません．");
+    }
+    if (node->rhs == NULL)
+    {
+        return u;
+    }
+
+    int left_unit;
+    switch (node->lhs->kind)
+    {
+    case ND_ADD:
+    case ND_SUB:
+        left_unit = 0;
+        break;
+    case ND_MUL:
+    case ND_DIV:
+        left_unit = 1;
+        break;
+    case ND_NUM:
+    case ND_GVAR:
+        left_unit = 0;
+        break;
+    default:
+        error("左辺は静的に計算できる式ではありません．%d", node->lhs->kind);
+    }
+    int right_unit;
+    switch (node->rhs->kind)
+    {
+    case ND_ADD:
+    case ND_SUB:
+        right_unit = 0;
+        break;
+    case ND_MUL:
+    case ND_DIV:
+        right_unit = 1;
+        break;
+    case ND_NUM:
+    case ND_GVAR:
+        right_unit = 0;
+        break;
+    default:
+        error("右辺は計算できる式ではありません．%d", node->rhs->kind);
+    }
+
+    switch (node->kind)
+    {
+    case ND_ADD:
+        return get_const_expr(node->lhs, left_unit) + get_const_expr(node->rhs, right_unit);
+    case ND_SUB:
+        return get_const_expr(node->lhs, left_unit) - get_const_expr(node->rhs, right_unit);
+    case ND_MUL:
+        return get_const_expr(node->lhs, left_unit) * get_const_expr(node->rhs, left_unit);
+    case ND_DIV:
+        return get_const_expr(node->lhs, left_unit) / get_const_expr(node->rhs, right_unit);
+    }
+}
+
+void gen_global(Node *node)
+{
+    switch (node->kind)
+    {
+    case ND_DECL:
+    {
+        Node *lvar = node->lhs;
+        for (Variables *vars = globals; vars; vars = vars->next)
+        {
+            if (lvar->name_length == vars->len && strncmp(lvar->name, vars->name, lvar->name_length) == 0)
+            {
+                printf(".comm   ");
+                if (vars->scope != GLOBAL)
+                {
+                    error("グローバル変数の読み込みに失敗しました．");
+                }
+                for (int i = 0; i < vars->len; i++)
+                {
+                    printf("%c", vars->name[i]);
+                }
+                printf(", %d\n", vars->offset);
+                break;
+            }
+        }
+    }
+    break;
+    case ND_ASSIGN:
+    {
+        Node *lvar = node->lhs;
+        for (int i = 0; i < lvar->name_length; i++)
+        {
+            printf("%c", lvar->name[i]);
+        }
+        printf(":\n");
+        switch (lvar->type->kind)
+        {
+        case INT:
+            printf("    .long ");
+            break;
+        case CHAR:
+            printf("    .byte ");
+            break;
+        default:
+            error("未対応の変数の型です．");
+        }
+        if (lvar->type->kind == INT || lvar->type->kind == CHAR)
+        {
+            int value = get_const_expr(node->rhs, 0);
+            Variables *variable = NULL;
+            for (Variables *var = globals; var; var = var->next)
+            {
+                if (lvar->name_length == var->len && strncmp(lvar->name, var->name, lvar->name_length) == 0)
+                {
+                    variable = var;
+                }
+            }
+            if (variable->initial_value_ptr == NULL)
+            {
+                variable->initial_value_ptr = (int *)calloc(1, sizeof(int));
+            }
+            *(variable->initial_value_ptr) = value;
+            printf("%d\n", value);
+        }
+    }
+    break;
+    default:
+        error("グローバル変数でサポートされていない構文です．");
+    }
+}
 
 void gen_lval(Node *node)
 {
@@ -63,8 +228,9 @@ void gen(Node *node)
         else if (node->type->kind == CHAR)
         {
             printf("    movsx eax, BYTE PTR [rax]\n");
-        } else if(node->type->kind == ARRAY) {
-
+        }
+        else if (node->type->kind == ARRAY)
+        {
         }
         else
         {
@@ -117,23 +283,27 @@ void gen(Node *node)
     case ND_DEREF:
         gen(node->lhs);
         printf("    pop rax\n");
-        if(node->lhs->type->to_type == NULL) {
+        if (node->lhs->type->to_type == NULL)
+        {
             error("参照外しできません．");
-        } else {
+        }
+        else
+        {
             TypeKind kind = node->lhs->type->to_type->kind;
-            switch(kind) {
-                case POINTER:
-                case ARRAY:
-                    printf("    mov rax, QWORD ");
-                    break;
-                case INT:
-                    printf("    mov eax, DWORD ");
-                    break;
-                case CHAR:
-                    printf("    movsx eax, BYTE ");
-                    break;
-                default:
-                    error("未実装の型です．");
+            switch (kind)
+            {
+            case POINTER:
+            case ARRAY:
+                printf("    mov rax, QWORD ");
+                break;
+            case INT:
+                printf("    mov eax, DWORD ");
+                break;
+            case CHAR:
+                printf("    movsx eax, BYTE ");
+                break;
+            default:
+                error("未実装の型です．");
             }
             printf("PTR [rax]\n");
         }
