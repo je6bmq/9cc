@@ -56,6 +56,7 @@ int main(int argc, char **argv)
     }
     printf("\n\n");
 
+
     for (int i = 0; i < temporary_string_id; i++)
     {
         String *str = get_string(string_vector, i);
@@ -69,9 +70,13 @@ int main(int argc, char **argv)
         printf("    .text\n");
     }
 
+    printf(".section .data\n");
+
     for(int i = 0; i < global_expressions->size; i++) {
         gen_global(get_node(global_expressions, i));
     }
+
+    printf(".section .text\n");
 
     char *registers64[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
     char *registers32[6] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};

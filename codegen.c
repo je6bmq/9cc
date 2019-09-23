@@ -6,13 +6,68 @@
 Token *token;
 Variables *globals;
 
-int get_const_expr(Node *node, int u)
+// void gen_global_pointer(Node *node, char *base_var, int diff)
+// {
+//     switch (node->kind)
+//     {
+//     case ND_GVAR:
+//         if (node->type->kind == POINTER || node->type->kind == ARRAY)
+//         {
+//         }
+//         else
+//         {
+//             error("アドレス，またはポインタではありません．");
+//         }
+//     case ND_ADDR:
+//         break;
+//     case ND_ADD:
+//     case ND_SUB:
+//     case ND_MUL:
+//     case ND_DIV:
+//     }
+// }
+
+ConstValue *get_const_expr(Node *node, int u)
 {
     switch (node->kind)
     {
     case ND_NUM:
-        return node->val;
-        break;
+    {
+        ConstValue *value = (ConstValue *)calloc(1, sizeof(ConstValue *));
+        value->pointer = NULL;
+
+        value->const_value = node->val;
+
+        return value;
+    }
+    case ND_ADDR:
+    {
+        Node *lvar_node = node->lhs;
+        Variables *variable = NULL;
+        for (Variables *var = globals; var; var = var->next)
+        {
+            if (lvar_node->name_length == var->len && strncmp(lvar_node->name, var->name, lvar_node->name_length) == 0)
+            {
+                variable = var;
+            }
+        }
+
+        if (variable == NULL)
+        {
+            error("予期せぬエラーが発生しました");
+        }
+
+        if (variable->initial_value_ptr == NULL)
+        {
+            error("グローバル変数が初期化されていません．");
+        }
+
+        ConstValue *value = (ConstValue *)calloc(1, sizeof(ConstValue *));
+        value->pointer = variable;
+        value->const_value = 0;
+
+        return value;
+    }
     case ND_GVAR:
     {
         Variables *variable = NULL;
@@ -33,7 +88,12 @@ int get_const_expr(Node *node, int u)
         {
             error("グローバル変数が初期化されていません．");
         }
-        return *(variable->initial_value_ptr);
+
+        ConstValue *value = (ConstValue *)calloc(1, sizeof(ConstValue *));
+        value->pointer = NULL;
+
+        value->const_value = *(variable->initial_value_ptr);
+        return value;
     }
     default:
         break;
@@ -45,7 +105,12 @@ int get_const_expr(Node *node, int u)
     }
     if (node->rhs == NULL)
     {
-        return u;
+        ConstValue *value = (ConstValue *)calloc(1, sizeof(ConstValue *));
+        value->pointer = NULL;
+
+        value->const_value = u;
+
+        return value;
     }
 
     int left_unit;
@@ -85,17 +150,32 @@ int get_const_expr(Node *node, int u)
         error("右辺は計算できる式ではありません．%d", node->rhs->kind);
     }
 
+    ConstValue *lhs = get_const_expr(node->lhs, left_unit);
+    ConstValue *rhs = get_const_expr(node->rhs, right_unit);
+
+    if (lhs->pointer != NULL && rhs->pointer != NULL)
+    {
+        error("アドレス同士の演算はできません．");
+    }
+    ConstValue *value = (ConstValue *)calloc(1, sizeof(ConstValue *));
+    value->pointer = NULL;
+
     switch (node->kind)
     {
     case ND_ADD:
-        return get_const_expr(node->lhs, left_unit) + get_const_expr(node->rhs, right_unit);
+        value->const_value = lhs->const_value + rhs->const_value;
+        break;
     case ND_SUB:
-        return get_const_expr(node->lhs, left_unit) - get_const_expr(node->rhs, right_unit);
+        value->const_value = lhs->const_value - rhs->const_value;
+        break;
     case ND_MUL:
-        return get_const_expr(node->lhs, left_unit) * get_const_expr(node->rhs, left_unit);
+        value->const_value = lhs->const_value * rhs->const_value;
+        break;
     case ND_DIV:
-        return get_const_expr(node->lhs, left_unit) / get_const_expr(node->rhs, right_unit);
+        value->const_value = lhs->const_value / rhs->const_value;
+        break;
     }
+    return value;
 }
 
 void gen_global(Node *node)
@@ -140,12 +220,15 @@ void gen_global(Node *node)
         case CHAR:
             printf("    .byte ");
             break;
+        case POINTER:
+            printf("    .quad ");
+            break;
         default:
-            error("未対応の変数の型です．");
+            error("未対応の変数の型です．\n");
         }
         if (lvar->type->kind == INT || lvar->type->kind == CHAR)
         {
-            int value = get_const_expr(node->rhs, 0);
+            ConstValue *value = get_const_expr(node->rhs, 0);
             Variables *variable = NULL;
             for (Variables *var = globals; var; var = var->next)
             {
@@ -158,8 +241,25 @@ void gen_global(Node *node)
             {
                 variable->initial_value_ptr = (int *)calloc(1, sizeof(int));
             }
-            *(variable->initial_value_ptr) = value;
-            printf("%d\n", value);
+            *(variable->initial_value_ptr) = value->const_value;
+            printf("%d\n", value->const_value);
+        }
+        else if (lvar->type->kind == POINTER)
+        {
+            ConstValue *value = get_const_expr(node->rhs, 0);
+
+            for (int i = 0; i < value->pointer->len; i++)
+            {
+                printf("%c", value->pointer->name[i]);
+            }
+            if (value->const_value != 0)
+            {
+                printf("%+d\n", value->const_value);
+            }
+            else
+            {
+                printf("\n");
+            }
         }
     }
     break;

@@ -160,12 +160,19 @@ struct Variables
     int offset;
     Type *type;
     Scope scope;
-    int* initial_value_ptr;
+    int *initial_value_ptr;
 };
+
+typedef struct
+{
+    Variables *pointer; // in address operation , it cannot use multiple pointer value.
+    int const_value;
+} ConstValue;
 
 void error_at(char *loc, char *fmt, ...);
 void warn_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
+void warn(char *fmt, ...);
 bool consume(char *op);
 void expect(char *op);
 int expect_number();
@@ -196,7 +203,7 @@ char *read_file(char *path);
 int desired_stack_size(Type *type);
 Type *expect_type();
 Type *consume_type();
-Variables* add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope); // return latest variable
+Variables *add_variables(Variables **variables_ptr, TypeKind element_kind, Scope scope); // return latest variable
 void program();
 Function *function();
 Node *stmt();
@@ -220,10 +227,11 @@ FunctionTable *find_function(Token *tok);
 void tokenize();
 int is_alnum(char c);
 
-void gen_global(Node* node);
-int get_const_expr(Node* node,int u);
-void gen_global_lval(Node* node);
-void gen_lval(Node* node);
+// void gen_global_pointer(Node *node, char *base_var, int diff);
+void gen_global(Node *node);
+ConstValue *get_const_expr(Node *node, int u);
+void gen_global_lval(Node *node);
+void gen_lval(Node *node);
 void gen(Node *node);
 
 NodeReferenceVector *new_node_vec();
@@ -246,7 +254,7 @@ extern FunctionTableLinkedList *function_table;
 extern int current_node_id;
 extern int temporary_string_id;
 extern TemporaryStringVector *string_vector;
-extern char* file_name;
-extern NodeReferenceVector* global_expressions;
+extern char *file_name;
+extern NodeReferenceVector *global_expressions;
 
 #endif

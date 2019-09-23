@@ -129,6 +129,17 @@ void error(char *fmt, ...)
 }
 
 /*
+    error function like fprintf
+ */
+void warn(char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt); // obtain varargs after "fmt"
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+}
+
+/*
   return whether next token is reserved symbol or not.
  */
 bool consume(char *op)
