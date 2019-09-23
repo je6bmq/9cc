@@ -64,7 +64,7 @@ ConstValue *get_const_expr(Node *node, int u)
 
         ConstValue *value = (ConstValue *)calloc(1, sizeof(ConstValue *));
         value->pointer = variable;
-        value->const_value = 0;
+        value->const_value = u;
 
         return value;
     }
@@ -126,6 +126,7 @@ ConstValue *get_const_expr(Node *node, int u)
         break;
     case ND_NUM:
     case ND_GVAR:
+    case ND_ADDR:
         left_unit = 0;
         break;
     default:
@@ -144,6 +145,7 @@ ConstValue *get_const_expr(Node *node, int u)
         break;
     case ND_NUM:
     case ND_GVAR:
+    case ND_ADDR:
         right_unit = 0;
         break;
     default:
@@ -159,6 +161,12 @@ ConstValue *get_const_expr(Node *node, int u)
     }
     ConstValue *value = (ConstValue *)calloc(1, sizeof(ConstValue *));
     value->pointer = NULL;
+
+    if(lhs->pointer != NULL) {
+        value->pointer = lhs->pointer;
+    } else if (rhs->pointer != NULL) {
+        value->pointer = rhs->pointer;
+    }
 
     switch (node->kind)
     {
