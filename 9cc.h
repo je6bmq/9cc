@@ -227,7 +227,6 @@ FunctionTable *find_function(Token *tok);
 void tokenize();
 int is_alnum(char c);
 
-// void gen_global_pointer(Node *node, char *base_var, int diff);
 void gen_global(Node *node);
 ConstValue *get_const_expr(Node *node, int u);
 void gen_global_lval(Node *node);

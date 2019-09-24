@@ -6,26 +6,6 @@
 Token *token;
 Variables *globals;
 
-// void gen_global_pointer(Node *node, char *base_var, int diff)
-// {
-//     switch (node->kind)
-//     {
-//     case ND_GVAR:
-//         if (node->type->kind == POINTER || node->type->kind == ARRAY)
-//         {
-//         }
-//         else
-//         {
-//             error("アドレス，またはポインタではありません．");
-//         }
-//     case ND_ADDR:
-//         break;
-//     case ND_ADD:
-//     case ND_SUB:
-//     case ND_MUL:
-//     case ND_DIV:
-//     }
-// }
 
 ConstValue *get_const_expr(Node *node, int u)
 {
