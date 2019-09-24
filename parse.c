@@ -17,7 +17,7 @@ TemporaryStringVector *string_vector;
 int current_node_id;
 int temporary_string_id;
 char *file_name; // 入力ファイル名
-NodeReferenceVector* global_expressions;
+NodeReferenceVector *global_expressions;
 
 // 指定されたファイルの内容を返す
 char *read_file(char *path)
@@ -454,7 +454,8 @@ int desired_stack_size(Type *type)
         Type *value_type = type->to_type;
         if (size <= 0)
         {
-            error_at(token->str, "配列の要素数は正の数である必要があります．");
+            // error_at(token->str, "配列の要素数は正の数である必要があります．");
+            return 0;
         }
         else if (value_type == NULL)
         {
@@ -660,8 +661,16 @@ Variables *add_variables(Variables **variables_ptr, TypeKind element_kind, Scope
         type = (Type *)calloc(1, sizeof(Type));
         type->to_type = tmp_type;
         type->kind = ARRAY;
-        type->array_size = expect_number();
-        expect("]");
+        if (consume("]"))
+        {
+            // array size input is empty
+            type->array_size = -1;
+        }
+        else
+        {
+            type->array_size = expect_number();
+            expect("]");
+        }
     }
 
     // Variables *lvar = (Variables *)calloc(1, sizeof(Variables));
@@ -734,14 +743,61 @@ void program()
             if (!consume(";"))
             {
                 expect("=");
+                Node *node;
+                if (lvar->type->kind == ARRAY)
+                {
+                    node = (Node *)calloc(1, sizeof(Node));
+                    NodeReferenceVector *elements = new_node_vec();
+                    node->name = lvar->name;
+                    node->name_length = lvar->name_length;
+                    node->kind = ND_INIT_ARRAY;
+                    node->type = lvar->type;
 
-                Node *node = new_node(ND_ASSIGN, lvar, expr(), NULL, 0);
+                    int expr_count = 0;
+
+                    expect("{");
+
+                    if (!consume("}"))
+                    {
+                        while (true)
+                        {
+                            push_node(elements, expr());
+                            expr_count++;
+
+                            if (!consume("}"))
+                            {
+                                expect(",");
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        node->statements = elements;
+                    }
+                    else
+                    {
+                        error_at(token->str, "1つ以上の要素で初期化する必要があります．");
+                    }
+
+                    if (node->type->array_size == -1)
+                    {
+                        node->type->array_size = expr_count;
+                    }
+                }
+                else
+                {
+                    node = new_node(ND_ASSIGN, lvar, expr(), NULL, 0);
+                }
                 expect(";");
-
                 push_node(global_expressions, node);
             }
             else
             {
+                if (lvar->type->kind == ARRAY && lvar->type->array_size == -1)
+                {
+                    error_at(token->str, "配列のサイズを指定してください．");
+                }
                 Node *node = new_node(ND_DECL, lvar, NULL, NULL, 0);
                 push_node(global_expressions, node);
             }

@@ -52,6 +52,7 @@ typedef enum
     ND_DEREF,      //  * (dereference operator)
     ND_DECL,       // variable declaration
     ND_STRING,     // string
+    ND_INIT_ARRAY  // array intiializer
 } NodeKind;
 
 typedef struct NodeReferenceVector NodeReferenceVector;

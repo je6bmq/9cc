@@ -6,7 +6,6 @@
 Token *token;
 Variables *globals;
 
-
 ConstValue *get_const_expr(Node *node, int u)
 {
     switch (node->kind)
@@ -142,9 +141,12 @@ ConstValue *get_const_expr(Node *node, int u)
     ConstValue *value = (ConstValue *)calloc(1, sizeof(ConstValue *));
     value->pointer = NULL;
 
-    if(lhs->pointer != NULL) {
+    if (lhs->pointer != NULL)
+    {
         value->pointer = lhs->pointer;
-    } else if (rhs->pointer != NULL) {
+    }
+    else if (rhs->pointer != NULL)
+    {
         value->pointer = rhs->pointer;
     }
 
@@ -170,6 +172,46 @@ void gen_global(Node *node)
 {
     switch (node->kind)
     {
+    case ND_INIT_ARRAY:
+    {
+        for(int i = 0; i< node->name_length; i++) {
+            printf("%c", node->name[i]);
+        }
+        printf(":\n");
+        
+        for (int i = 0; i < node->statements->size; i++)
+        {
+            Node *element = get_node(node->statements, i);
+            ConstValue *value = get_const_expr(element, 0);
+
+            switch (node->type->to_type->kind)
+            {
+            case INT:
+                printf("    .long %d\n", value->const_value);
+                break;
+            case CHAR:
+                printf("    .byte %d\n", value->const_value);
+                break;
+            case POINTER:
+                printf("    .quad ");
+                for (int j = 0; j < value->pointer->len; j++)
+                {
+                    printf("%c", value->pointer->name[j]);
+                }
+                printf("\n");
+                break;
+            default:
+                error("未実装の型です．");
+            }
+        }
+        int type_size = desired_stack_size(node->type->to_type);
+
+        if (node->type->array_size - node->statements->size > 0)
+        {
+            printf("    .zero %d\n", type_size * (node->type->array_size - node->statements->size));
+        }
+    }
+    break;
     case ND_DECL:
     {
         Node *lvar = node->lhs;
