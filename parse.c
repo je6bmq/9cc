@@ -744,6 +744,31 @@ void program()
             {
                 expect("=");
                 Node *node;
+                if (lvar->type->kind == ARRAY && lvar->type->to_type->kind == CHAR)
+                {
+                    node = (Node *)calloc(1, sizeof(Node));
+                    if (consume("\""))
+                    {
+                        node->name = lvar->name;
+                        node->name_length = lvar->name_length;
+                        node->kind = ND_INIT_ARRAY;
+                        node->type = lvar->type;
+
+                        node->lhs = (Node *)calloc(1, sizeof(Node));
+                        node->lhs->kind = ND_STRING;
+                        node->lhs->name = token->str;
+                        node->lhs->name_length = token->len;
+
+                        node->type->array_size = token->len;
+                        
+                        token = token->next;
+
+                        expect("\"");
+                        push_node(global_expressions, node);
+                        expect(";");
+                        continue;
+                    }
+                }
                 if (lvar->type->kind == ARRAY)
                 {
                     node = (Node *)calloc(1, sizeof(Node));

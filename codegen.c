@@ -178,7 +178,14 @@ void gen_global(Node *node)
             printf("%c", node->name[i]);
         }
         printf(":\n");
-        
+        if(node->type->kind == ARRAY && node->type->to_type->kind == CHAR && node->lhs != NULL && node->lhs->kind == ND_STRING) {
+            printf("    .string \"");
+            for(int i= 0; i< node->lhs->name_length; i++) {
+                printf("%c", node->lhs->name[i]);
+            }
+            printf("\"\n");
+            return;
+        }
         for (int i = 0; i < node->statements->size; i++)
         {
             Node *element = get_node(node->statements, i);
@@ -294,7 +301,7 @@ void gen_global(Node *node)
     }
     break;
     default:
-        error("グローバル変数でサポートされていない構文です．");
+        error("グローバル変数でサポートされていない構文です．%d", node->kind);
     }
 }
 
