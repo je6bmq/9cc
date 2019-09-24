@@ -13,15 +13,20 @@ do
     tmp=$(mktemp ./XXXXXX.tmp)
     
     set -x 
-    ../9cc $file > ${file%%.c}.s 2>$tmp && cat $tmp >> $TEST_LOG  
+    ../9cc $file > ${file%%.c}.s 2>$tmp  
     set +x
 
-    rm -f $tmp
-    
     set -x  
-    gcc ${file%%.c}.s -o ${file%%.c}.o -no-pie >> $TEST_LOG 2>&1 && ./${file%%.c}.o >> $TEST_LOG 2>&1
+    gcc ${file%%.c}.s -o ${file%%.c}.o -no-pie >> $tmp 2>&1 && ./${file%%.c}.o >> $tmp 2>&1
     set +x
-    
+
+    if [ $? -ne 0 ]; then
+        cat $tmp
+        exit 1
+    fi
+
+    cat $tmp >> $TEST_LOG
+    rm -f $tmp    
     echo "" >>  $TEST_LOG
 done
 
