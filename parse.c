@@ -704,6 +704,9 @@ Variables *add_variables(Variables **variables_ptr, TypeKind element_kind, Scope
     Variables *lvar_next = (Variables *)calloc(1, sizeof(Variables));
     for (Variables *var = (*variables_ptr); var; var = var->next)
     {
+        if(tok->len == var->len && memcmp(tok->str, var->name, tok->len) == 0) {
+            error_at(tok->str, "すでに定義されている変数名です．");
+        }
         lvar = var;
     }
     lvar_next->name = tok->str;
