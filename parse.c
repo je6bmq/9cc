@@ -964,7 +964,12 @@ Node *stmt()
         Type *type = consume_type();
         if (type != NULL)
         {
-            Token* tmp_token = token; // backup token at before variable declaration to re-use for (initialize) assignment
+            // backup token at before variable declaration to re-use for (initialize) assignment
+            // e.g. int a = 3; to int a; a = 3; (reuse token "a")
+            Token* tmp_token = token;
+            while(tmp_token != NULL && strncmp(tmp_token->str, "*", 1) == 0) {
+                tmp_token = tmp_token->next; // if do not this, assignment(initialize) will be dereferenced.
+            }
             add_variables(&locals, type->kind, LOCAL);
             node = new_node(ND_DECL, NULL, NULL, NULL, 0);
             if (consume("="))
