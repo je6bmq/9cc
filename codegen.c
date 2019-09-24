@@ -563,6 +563,64 @@ void gen(Node *node)
         printf("    mov rax, OFFSET FLAT:.LC%d\n", node->lhs->val);
         printf("    push rax\n");
         return;
+    case ND_INIT_ARRAY:
+    {
+        int type_size = desired_stack_size(node->type->to_type);
+        for (int i = 0; i < node->statements->size; i++)
+        {
+            Node *element = get_node(node->statements, i);
+            printf("    mov rax, rbp\n");
+            printf("    sub rax, %d\n", node->offset - type_size * i);
+            printf("    push rax\n");
+            gen(element);
+
+            printf("    pop rdi\n");
+            printf("    pop rax\n");
+
+            if (node->type->to_type->kind == POINTER)
+            {
+                printf("    mov QWORD PTR [rax], rdi\n");
+            }
+            else if (node->type->to_type->kind == INT)
+            {
+                printf("    mov DWORD PTR [rax], edi\n");
+            }
+            else if (node->type->to_type->kind == CHAR)
+            {
+                printf("    mov BYTE PTR [rax], dil\n");
+            }
+            else
+            {
+                error("型情報が不明です．");
+            }
+
+            printf("    push rdi\n");
+        }
+        for (int i = node->statements->size; i < node->type->array_size; i++)
+        {
+            printf("    mov rax, rbp\n");
+            printf("    sub rax, %d\n", node->offset - type_size * i);
+            if (node->type->to_type->kind == POINTER)
+            {
+                printf("    mov QWORD PTR [rax], 0\n");
+            }
+            else if (node->type->to_type->kind == INT)
+            {
+                printf("    mov DWORD PTR [rax], 0\n");
+            }
+            else if (node->type->to_type->kind == CHAR)
+            {
+                printf("    mov BYTE PTR [rax], 0n");
+            }
+            else
+            {
+                error("型情報が不明です．");
+            }
+            printf("    push 0\n");
+        }
+        printf("    push rax\n");
+    }
+        return;
     }
 
     gen(node->lhs);

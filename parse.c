@@ -454,8 +454,7 @@ int desired_stack_size(Type *type)
         Type *value_type = type->to_type;
         if (size <= 0)
         {
-            // error_at(token->str, "配列の要素数は正の数である必要があります．");
-            return 0;
+            error_at(token->str, "配列の要素数は正の数である必要があります．");
         }
         else if (value_type == NULL)
         {
@@ -665,6 +664,33 @@ Variables *add_variables(Variables **variables_ptr, TypeKind element_kind, Scope
         {
             // array size input is empty
             type->array_size = -1;
+            Token *tmp_token = token;
+            int array_size = 0;
+            if (memcmp(tmp_token->str, "=", 1) == 0)
+            {
+                tmp_token = tmp_token->next;
+                if (memcmp(tmp_token->str, "{", 1) == 0)
+                {
+                    while (true)
+                    {
+                        if (memcmp(tmp_token->str, "}", 1) == 0)
+                        {
+                            array_size++;
+                            break;
+                        }
+                        else if (memcmp(tmp_token->str, ",", 1) == 0)
+                        {
+                            array_size++;
+                        }
+                        tmp_token = tmp_token->next;
+                    }
+                    type->array_size = array_size;
+                } else if (memcmp(tmp_token->str, "\"", 1) == 0) {
+                    tmp_token = tmp_token->next;
+                    type->array_size = tmp_token->len + 1;
+                    tmp_token = tmp_token->next;
+                }
+            }
         }
         else
         {
@@ -759,7 +785,7 @@ void program()
                         node->lhs->name = token->str;
                         node->lhs->name_length = token->len;
 
-                        node->type->array_size = token->len;
+                        node->type->array_size = token->len + 1;
 
                         token = token->next;
 
@@ -778,8 +804,6 @@ void program()
                     node->kind = ND_INIT_ARRAY;
                     node->type = lvar->type;
 
-                    int expr_count = 0;
-
                     expect("{");
 
                     if (!consume("}"))
@@ -787,7 +811,6 @@ void program()
                         while (true)
                         {
                             push_node(elements, expr());
-                            expr_count++;
 
                             if (!consume("}"))
                             {
@@ -803,11 +826,6 @@ void program()
                     else
                     {
                         error_at(token->str, "1つ以上の要素で初期化する必要があります．");
-                    }
-
-                    if (node->type->array_size == -1)
-                    {
-                        node->type->array_size = expr_count;
                     }
                 }
                 else if (lvar->type->kind == POINTER && lvar->type->to_type->kind == CHAR)
@@ -966,30 +984,71 @@ Node *stmt()
         {
             // backup token at before variable declaration to re-use for (initialize) assignment
             // e.g. int a = 3; to int a; a = 3; (reuse token "a")
-            Token* tmp_token = token;
-            while(tmp_token != NULL && strncmp(tmp_token->str, "*", 1) == 0) {
+            Token *tmp_token = token;
+            while (tmp_token != NULL && strncmp(tmp_token->str, "*", 1) == 0)
+            {
                 tmp_token = tmp_token->next; // if do not this, assignment(initialize) will be dereferenced.
             }
-            add_variables(&locals, type->kind, LOCAL);
+            Variables *variable = add_variables(&locals, type->kind, LOCAL);
             node = new_node(ND_DECL, NULL, NULL, NULL, 0);
             if (consume("="))
             {
-                switch (type->kind)
+                switch (variable->type->kind)
                 {
                 case CHAR:
                 case INT:
-                case POINTER:{
+                case POINTER:
+                {
                     token = tmp_token;
                     Node *assignment = assign();
-                    node = new_node(ND_INIT_LOCAL, node, assignment, NULL, 0);                    
+                    node = new_node(ND_INIT_LOCAL, node, assignment, NULL, 0);
                 }
-                    break;
+                break;
                 case ARRAY:
+                {
+                    node = new_node(ND_INIT_ARRAY, node, NULL, NULL, 0);
+                    node = (Node *)calloc(1, sizeof(Node));
+                    NodeReferenceVector *elements = new_node_vec();
+                    node->kind = ND_INIT_ARRAY;
+                    node->offset = variable->offset;
+                    node->type = variable->type;
+
+                    if (node->type->kind != ARRAY)
+                    {
+                        error_at(token->str, "配列型ではありません．");
+                    }
+
+                    int expr_count = 0;
+
+                    expect("{");
+
+                    if (!consume("}"))
+                    {
+                        while (true)
+                        {
+                            push_node(elements, expr());
+                            expr_count++;
+
+                            if (!consume("}"))
+                            {
+                                expect(",");
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        node->statements = elements;
+                    }
+                    else
+                    {
+                        error_at(token->str, "1つ以上の要素で初期化する必要があります．");
+                    }
+                }
+                break;
+                default:
                     error_at(token->str, "初期化式が未実装の型です．");
                 }
-            }
-            else
-            {
             }
         }
         else
