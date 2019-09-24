@@ -555,6 +555,10 @@ void gen(Node *node)
     case ND_DECL:
         printf("    push rax\n");
         return;
+    case ND_INIT_LOCAL:
+        gen(node->lhs);
+        gen(node->rhs);
+        return;
     case ND_STRING:
         printf("    mov rax, OFFSET FLAT:.LC%d\n", node->lhs->val);
         printf("    push rax\n");

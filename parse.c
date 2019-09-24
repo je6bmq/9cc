@@ -964,8 +964,28 @@ Node *stmt()
         Type *type = consume_type();
         if (type != NULL)
         {
+            Token* tmp_token = token; // backup token at before variable declaration to re-use for (initialize) assignment
             add_variables(&locals, type->kind, LOCAL);
             node = new_node(ND_DECL, NULL, NULL, NULL, 0);
+            if (consume("="))
+            {
+                switch (type->kind)
+                {
+                case CHAR:
+                case INT:
+                case POINTER:{
+                    token = tmp_token;
+                    Node *assignment = assign();
+                    node = new_node(ND_INIT_LOCAL, node, assignment, NULL, 0);                    
+                }
+                    break;
+                case ARRAY:
+                    error_at(token->str, "初期化式が未実装の型です．");
+                }
+            }
+            else
+            {
+            }
         }
         else
         {

@@ -52,7 +52,8 @@ typedef enum
     ND_DEREF,      //  * (dereference operator)
     ND_DECL,       // variable declaration
     ND_STRING,     // string
-    ND_INIT_ARRAY  // array intiializer
+    ND_INIT_ARRAY, // array intiializer
+    ND_INIT_LOCAL // local variable (not array ) initializer
 } NodeKind;
 
 typedef struct NodeReferenceVector NodeReferenceVector;
@@ -187,7 +188,7 @@ char *read_file(char *path);
     stmt    = expr ";"
             | "{" stmt* "}"
             | "return" expr ";"
-            | "int" ident ";"
+            | "int" | "char" ident ("=" expr)? ";"
     expr       = assign
     assign     = equality ("=" assign)?
     equality   = relational ("==" relational | "!=" relational)*
