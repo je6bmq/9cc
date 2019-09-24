@@ -174,13 +174,16 @@ void gen_global(Node *node)
     {
     case ND_INIT_ARRAY:
     {
-        for(int i = 0; i< node->name_length; i++) {
+        for (int i = 0; i < node->name_length; i++)
+        {
             printf("%c", node->name[i]);
         }
         printf(":\n");
-        if(node->type->kind == ARRAY && node->type->to_type->kind == CHAR && node->lhs != NULL && node->lhs->kind == ND_STRING) {
+        if (node->type->kind == ARRAY && node->type->to_type->kind == CHAR && node->lhs != NULL && node->lhs->kind == ND_STRING)
+        {
             printf("    .string \"");
-            for(int i= 0; i< node->lhs->name_length; i++) {
+            for (int i = 0; i < node->lhs->name_length; i++)
+            {
                 printf("%c", node->lhs->name[i]);
             }
             printf("\"\n");
@@ -283,19 +286,27 @@ void gen_global(Node *node)
         }
         else if (lvar->type->kind == POINTER)
         {
-            ConstValue *value = get_const_expr(node->rhs, 0);
-
-            for (int i = 0; i < value->pointer->len; i++)
+            if (node->rhs->kind == ND_STRING)
             {
-                printf("%c", value->pointer->name[i]);
-            }
-            if (value->const_value != 0)
-            {
-                printf("%+d\n", value->const_value);
+                int string_id = node->rhs->lhs->val;
+                printf(".LC%d\n", node->lhs->val);
             }
             else
             {
-                printf("\n");
+                ConstValue *value = get_const_expr(node->rhs, 0);
+
+                for (int i = 0; i < value->pointer->len; i++)
+                {
+                    printf("%c", value->pointer->name[i]);
+                }
+                if (value->const_value != 0)
+                {
+                    printf("%+d\n", value->const_value);
+                }
+                else
+                {
+                    printf("\n");
+                }
             }
         }
     }

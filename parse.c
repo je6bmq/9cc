@@ -760,7 +760,7 @@ void program()
                         node->lhs->name_length = token->len;
 
                         node->type->array_size = token->len;
-                        
+
                         token = token->next;
 
                         expect("\"");
@@ -809,6 +809,34 @@ void program()
                     {
                         node->type->array_size = expr_count;
                     }
+                }
+                else if (lvar->type->kind == POINTER && lvar->type->to_type->kind == CHAR)
+                {
+                    if (consume("\""))
+                    {
+                        String *str = (String *)calloc(1, sizeof(String));
+                        str->id = temporary_string_id++;
+                        str->value_str = token->str;
+                        str->value_len = token->len;
+                        if (string_vector == NULL)
+                        {
+                            string_vector = new_string_vec();
+                        }
+                        push_string(string_vector, str);
+                        node = new_node(ND_STRING, new_node_num(str->id), NULL, NULL, 0);
+                        Type *type = (Type *)calloc(1, sizeof(Type));
+                        type->kind = POINTER;
+
+                        type->to_type = (Type *)calloc(1, sizeof(Type));
+                        type->to_type->kind = CHAR;
+                        type->to_type->to_type = NULL;
+                        type->to_type->array_size = 0;
+                        node->type = type;
+                        token = token->next;
+
+                        expect("\"");
+                    }
+                    node = new_node(ND_ASSIGN, lvar, node, NULL, 0);
                 }
                 else
                 {
